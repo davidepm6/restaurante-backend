@@ -1,14 +1,35 @@
+import uuid
+
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
 
 def _crear_categoria_y_producto(nombre_prod="Hamburguesa", stock=10):
-    cat = client.post("/categorias/", json={"nombre": f"Cat-{nombre_prod}"}).json()
-    prod = client.post("/productos/", json={
-        "nombre": nombre_prod, "precio": 15000, "stock": stock, "categoria_id": cat["id"]
-    }).json()
-    return prod
+    nombre_categoria = f"Cat-{nombre_prod}-{uuid.uuid4().hex[:8]}"
+
+    respuesta_categoria = client.post(
+        "/categorias/",
+        json={"nombre": nombre_categoria}
+    )
+
+    assert respuesta_categoria.status_code == 201, respuesta_categoria.text
+
+    cat = respuesta_categoria.json()
+
+    respuesta_producto = client.post(
+        "/productos/",
+        json={
+            "nombre": nombre_prod,
+            "precio": 15000,
+            "stock": stock,
+            "categoria_id": cat["id"]
+        }
+    )
+
+    assert respuesta_producto.status_code == 201, respuesta_producto.text
+
+    return respuesta_producto.json()
 
 def test_registrar_venta_calcula_total_y_actualiza_stock():
     producto = _crear_categoria_y_producto(stock=10)
