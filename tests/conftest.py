@@ -5,6 +5,15 @@ from app.database import SessionLocal
 from app.models.usuario import Usuario, RolUsuario
 from app.security.hashing import hash_password
 
+import os 
+from dotenv import load_dotenv
+
+load_dotenv(".env.test", override=True)
+
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
 client = TestClient(app)
 
 
