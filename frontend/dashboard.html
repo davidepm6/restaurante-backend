@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel - Restaurante</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+    <h1>Sistema de Restaurante</h1>
+    <div>
+    <span id="rol-label"></span>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+</header>
+
+<nav class="tabs">
+    <button class="tab-btn" data-tab="categorias">Categorías</button>
+    <button class="tab-btn" data-tab="productos">Productos</button>
+    <button class="tab-btn" data-tab="ventas">Ventas</button>
+    <button class="tab-btn admin-only" data-tab="financiero">Financiero</button>
+    <button class="tab-btn admin-only" data-tab="reportes">Reportes</button>
+</nav>
+
+<main>
+    <section id="tab-categorias" class="tab-content">
+        <h2>Categorías</h2>
+        <form id="form-categoria" class="inline-form">
+        <input type="text" id="cat-nombre" placeholder="Nombre" required>
+        <input type="text" id="cat-descripcion" placeholder="Descripción">
+        <button type="submit">Crear</button>
+        </form>
+        <table id="tabla-categorias">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th class="admin-only">Acciones</th></tr></thead>
+        <tbody></tbody>
+        </table>
+    </section>
+
+    <section id="tab-productos" class="tab-content hidden">
+    <h2>Productos</h2>
+    <form id="form-producto" class="inline-form admin-only">
+        <input type="text" id="prod-nombre" placeholder="Nombre" required>
+        <input type="number" id="prod-precio" placeholder="Precio" step="0.01" required>
+        <input type="number" id="prod-stock" placeholder="Stock" required>
+        <select id="prod-categoria"></select>
+        <button type="submit">Crear</button>
+    </form>
+    <table id="tabla-productos">
+        <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th class="admin-only">Acciones</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<section id="tab-ventas" class="tab-content hidden">
+    <h2>Registrar venta</h2>
+    <div id="items-venta"></div>
+    <button id="btn-agregar-item">+ Agregar producto</button>
+    <button id="btn-registrar-venta">Registrar venta</button>
+    <p id="venta-msg"></p>
+
+    <h3 class="admin-only">Ventas registradas</h3>
+    <table id="tabla-ventas" class="admin-only">
+        <thead><tr><th>ID</th><th>Fecha</th><th>Total</th></tr></thead>
+        <tbody></tbody>
+    </table>
+</section>
+
+<section id="tab-financiero" class="tab-content hidden">
+    <h2>Financiero</h2>
+    <div class="inline-form">
+        <label>Desde</label><input type="date" id="fin-desde">
+        <label>Hasta</label><input type="date" id="fin-hasta">
+        <button id="btn-consultar-financiero">Consultar balance</button>
+    </div>
+    <div id="resultado-financiero"></div>
+
+    <h3>Registrar egreso</h3>
+    <form id="form-egreso" class="inline-form">
+        <input type="text" id="egreso-concepto" placeholder="Concepto" required>
+        <input type="number" id="egreso-valor" placeholder="Valor" step="0.01" required>
+        <input type="date" id="egreso-fecha" required>
+        <button type="submit">Registrar</button>
+    </form>
+</section>
+
+<section id="tab-reportes" class="tab-content hidden">
+    <h2>Reportes</h2>
+    <div class="inline-form">
+        <input type="date" id="rep-fecha">
+        <button id="btn-reporte-diario">Ver reporte diario</button>
+        <button id="btn-pdf-diario">Descargar PDF diario</button>
+    </div>
+    <div class="inline-form">
+        <input type="number" id="rep-anio" placeholder="Año">
+        <input type="number" id="rep-mes" placeholder="Mes" min="1" max="12">
+        <button id="btn-reporte-mensual">Ver reporte mensual</button>
+        <button id="btn-pdf-mensual">Descargar PDF mensual</button>
+    </div>
+    <div id="resultado-reporte"></div>
+    </section>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

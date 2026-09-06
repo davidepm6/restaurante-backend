@@ -1,0 +1,26 @@
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body { margin: 0; background: #f4f4f4; }
+
+.login-body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #222; }
+.login-box { background: white; padding: 2rem; border-radius: 8px; width: 300px; }
+.login-box input { width: 100%; padding: 8px; margin: 6px 0; }
+.login-box button { width: 100%; padding: 10px; background: #911; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.error { color: red; font-size: 0.9rem; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; background: #222; color: white; padding: 1rem 2rem; }
+.topbar button { background: #911; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+
+.tabs { display: flex; background: #333; }
+.tab-btn { flex: 1; padding: 12px; background: none; border: none; color: white; cursor: pointer; }
+.tab-btn.active { background: #911; }
+
+main { padding: 2rem; }
+.tab-content.hidden { display: none; }
+.inline-form { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+.inline-form input, .inline-form select { padding: 6px; }
+
+table { width: 100%; border-collapse: collapse; background: white; margin-top: 1rem; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background: #eee; }
+
+.hidden { display: none !important; }

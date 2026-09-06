@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Restaurante - Iniciar sesión</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-box">
+    <h1>Sistema de Restaurante</h1>
+    <form id="form-login">
+      <label>Email</label>
+      <input type="email" id="email" required>
+    <label>Contraseña</label>
+    <input type="password" id="password" required>
+    <button type="submit">Ingresar</button>
+    <p id="error-msg" class="error"></p>
+    </form>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+    document.getElementById('form-login').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorMsg = document.getElementById('error-msg');
+        errorMsg.textContent = '';
+        try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        if (!res.ok) {
+            errorMsg.textContent = 'Credenciales inválidas';
+            return;
+        }
+        const data = await res.json();
+        guardarSesion(data.access_token, data.rol);
+        window.location.href = 'dashboard.html';
+    } catch (err) {
+        errorMsg.textContent = 'No se pudo conectar con el servidor';
+    }
+    });
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List
 from datetime import datetime
 
@@ -16,8 +16,7 @@ class DetalleVentaOut(BaseModel):
     precio_unitario: float
     subtotal: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class VentaOut(BaseModel):
     id: int
@@ -25,5 +24,4 @@ class VentaOut(BaseModel):
     total: float
     detalles: List[DetalleVentaOut]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

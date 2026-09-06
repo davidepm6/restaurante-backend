@@ -1,28 +1,32 @@
 from app.database import SessionLocal, Base, engine
-from app import models  # fuerza el registro de todos los modelos en Base
+from app import models
 from app.models.usuario import Usuario, RolUsuario
 from app.security.hashing import hash_password
 
-Base.metadata.create_all(bind=engine)  # asegura que todas las tablas existan, incluida 'usuarios'
+Base.metadata.create_all(bind=engine)
 
 db = SessionLocal()
 
-email = input("Email del administrador: ")
+email = input("Email: ")
 nombre = input("Nombre: ")
 password = input("Contraseña: ")
+
+print("Roles disponibles: 1) ADMINISTRADOR  2) EMPLEADO")
+opcion = input("Selecciona el rol (1 o 2): ").strip()
+rol = RolUsuario.ADMINISTRADOR if opcion == "1" else RolUsuario.EMPLEADO
 
 if db.query(Usuario).filter(Usuario.email == email).first():
     print("Ya existe un usuario con ese email.")
 else:
-    admin = Usuario(
+    nuevo_usuario = Usuario(
         nombre=nombre,
         email=email,
         password_hash=hash_password(password),
-        rol=RolUsuario.ADMINISTRADOR,
+        rol=rol,
         activo=True
     )
-    db.add(admin)
+    db.add(nuevo_usuario)
     db.commit()
-    print(f"Administrador '{email}' creado correctamente.")
+    print(f"Usuario '{email}' creado correctamente con rol {rol.value}.")
 
 db.close()
