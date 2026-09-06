@@ -4,11 +4,18 @@ from app.database import get_db
 from app.models.producto import Producto
 from app.models.categoria import Categoria
 from app.schemas.producto import ProductoCreate, ProductoUpdate, ProductoOut
+from app.security.dependencies import obtener_usuario_actual, requiere_rol
+from app.models.usuario import RolUsuario
 
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
+
 @router.post("/", response_model=ProductoOut, status_code=201)
-def crear_producto(producto: ProductoCreate, db: Session = Depends(get_db)):
+def crear_producto(
+    producto: ProductoCreate,
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+):
     categoria = db.query(Categoria).filter(Categoria.id == producto.categoria_id).first()
     if not categoria:
         raise HTTPException(status_code=400, detail="La categoría indicada no existe")
@@ -18,19 +25,34 @@ def crear_producto(producto: ProductoCreate, db: Session = Depends(get_db)):
     db.refresh(nuevo)
     return nuevo
 
+
 @router.get("/", response_model=list[ProductoOut])
-def listar_productos(db: Session = Depends(get_db)):
+def listar_productos(
+    db: Session = Depends(get_db),
+    _=Depends(obtener_usuario_actual)
+):
     return db.query(Producto).filter(Producto.activo == True).all()
 
+
 @router.get("/{producto_id}", response_model=ProductoOut)
-def obtener_producto(producto_id: int, db: Session = Depends(get_db)):
+def obtener_producto(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(obtener_usuario_actual)
+):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
     return producto
 
+
 @router.put("/{producto_id}", response_model=ProductoOut)
-def actualizar_producto(producto_id: int, datos: ProductoUpdate, db: Session = Depends(get_db)):
+def actualizar_producto(
+    producto_id: int,
+    datos: ProductoUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")
@@ -44,9 +66,13 @@ def actualizar_producto(producto_id: int, datos: ProductoUpdate, db: Session = D
     db.refresh(producto)
     return producto
 
+
 @router.delete("/{producto_id}", status_code=200)
-def eliminar_producto(producto_id: int, db: Session = Depends(get_db)):
-    # HU07: se desactiva (soft delete) para conservar el historial de ventas
+def eliminar_producto(
+    producto_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
         raise HTTPException(status_code=404, detail="Producto no encontrado")

@@ -8,6 +8,8 @@ from app.models.venta import Venta
 from app.models.egreso import Egreso
 from app.schemas.egreso import EgresoOut
 from app.schemas.financiero import IngresosOut, EgresosOut, BalanceOut
+from app.security.dependencies import requiere_rol
+from app.models.usuario import RolUsuario
 
 router = APIRouter(prefix="/financiero", tags=["Financiero"])
 
@@ -31,9 +33,9 @@ def _obtener_egresos(db: Session, fecha_inicio: date, fecha_fin: date):
 def consultar_ingresos(
     fecha_inicio: date = Query(...),
     fecha_fin: date = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
-    # HU15: si no hay ventas en el período, el ingreso se muestra como 0 (ya lo cubre _calcular_ingresos)
     total = _calcular_ingresos(db, fecha_inicio, fecha_fin)
     return IngresosOut(fecha_inicio=str(fecha_inicio), fecha_fin=str(fecha_fin), total_ingresos=total)
 
@@ -42,9 +44,9 @@ def consultar_ingresos(
 def consultar_egresos(
     fecha_inicio: date = Query(...),
     fecha_fin: date = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
-    # HU16: si no hay egresos en el período, el total se muestra como 0
     egresos = _obtener_egresos(db, fecha_inicio, fecha_fin)
     total = sum(float(e.valor) for e in egresos)
     return EgresosOut(
@@ -59,9 +61,9 @@ def consultar_egresos(
 def consultar_balance(
     fecha_inicio: date = Query(...),
     fecha_fin: date = Query(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
-    # HU17: balance = ingresos - egresos, mismo rango de fechas para ambos
     total_ingresos = _calcular_ingresos(db, fecha_inicio, fecha_fin)
     egresos = _obtener_egresos(db, fecha_inicio, fecha_fin)
     total_egresos = sum(float(e.valor) for e in egresos)

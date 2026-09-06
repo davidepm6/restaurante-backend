@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 from typing import Optional, List
 
 from app.database import get_db
@@ -8,16 +8,21 @@ from app.models.producto import Producto
 from app.models.venta import Venta
 from app.models.detalle_venta import DetalleVenta
 from app.schemas.venta import VentaCreate, VentaOut, DetalleVentaOut
+from app.security.dependencies import requiere_rol
+from app.models.usuario import RolUsuario
 
 router = APIRouter(prefix="/ventas", tags=["Ventas"])
 
 
 @router.post("/", response_model=VentaOut, status_code=201)
-def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
+def registrar_venta(
+    venta: VentaCreate,
+    db: Session = Depends(get_db),
+    usuario=Depends(requiere_rol(RolUsuario.EMPLEADO, RolUsuario.ADMINISTRADOR))
+):
     if not venta.items:
         raise HTTPException(status_code=400, detail="La venta debe tener al menos un producto")
 
-    # 1. Cargar y validar todos los productos y el stock ANTES de tocar la base
     productos_map = {}
     for item in venta.items:
         producto = db.query(Producto).filter(
@@ -33,11 +38,10 @@ def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
             )
         productos_map[item.producto_id] = producto
 
-    # 2. Todo lo siguiente ocurre en la misma transacción; si algo falla, se hace rollback
     try:
-        nueva_venta = Venta(total=0)
+        nueva_venta = Venta(total=0, usuario_id=usuario.id)
         db.add(nueva_venta)
-        db.flush()  # obtiene nueva_venta.id sin cerrar la transacción
+        db.flush()
 
         total_venta = 0
         detalles_creados = []
@@ -57,7 +61,6 @@ def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
             db.add(detalle)
             detalles_creados.append((detalle, producto.nombre))
 
-            # HU12: actualizar stock en la misma transacción
             producto.stock -= item.cantidad
 
         nueva_venta.total = total_venta
@@ -89,7 +92,8 @@ def registrar_venta(venta: VentaCreate, db: Session = Depends(get_db)):
 def listar_ventas(
     fecha_inicio: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
     fecha_fin: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
     query = db.query(Venta)
 
@@ -117,7 +121,11 @@ def listar_ventas(
 
 
 @router.get("/{venta_id}", response_model=VentaOut)
-def obtener_venta(venta_id: int, db: Session = Depends(get_db)):
+def obtener_venta(
+    venta_id: int,
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+):
     venta = db.query(Venta).filter(Venta.id == venta_id).first()
     if not venta:
         raise HTTPException(status_code=404, detail="Venta no encontrada")
