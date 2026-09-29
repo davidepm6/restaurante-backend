@@ -1,107 +1,176 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Panel - Restaurante</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel — Restaurante</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="topbar">
-    <h1>Sistema de Restaurante</h1>
-    <div>
-    <span id="rol-label"></span>
-    <button onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
-</header>
+<div class="app-shell">
 
-<nav class="tabs">
-    <button class="tab-btn" data-tab="categorias">Categorías</button>
-    <button class="tab-btn" data-tab="productos">Productos</button>
-    <button class="tab-btn" data-tab="ventas">Ventas</button>
-    <button class="tab-btn admin-only" data-tab="financiero">Financiero</button>
-    <button class="tab-btn admin-only" data-tab="reportes">Reportes</button>
-</nav>
+  <aside class="sidebar">
+    <div class="mark">Restaurante</div>
+    <div class="mark-sub">Panel de gestión</div>
+    <ul class="nav-list">
+      <li><button class="nav-item" data-tab="categorias">Categorías</button></li>
+      <li><button class="nav-item" data-tab="productos">Productos</button></li>
+      <li><button class="nav-item" data-tab="ventas">Ventas</button></li>
+      <li><button class="nav-item admin-only" data-tab="financiero">Financiero</button></li>
+      <li><button class="nav-item admin-only" data-tab="reportes">Reportes</button></li>
+    </ul>
+  </aside>
 
-<main>
-    <section id="tab-categorias" class="tab-content">
-        <h2>Categorías</h2>
-        <form id="form-categoria" class="inline-form">
-        <input type="text" id="cat-nombre" placeholder="Nombre" required>
-        <input type="text" id="cat-descripcion" placeholder="Descripción">
-        <button type="submit">Crear</button>
+  <div class="main-area">
+    <header class="topbar">
+      <span class="role-pill" id="rol-label"></span>
+      <button class="btn-ghost" onclick="cerrarSesion()">Cerrar sesión</button>
+    </header>
+
+    <main>
+      <!-- Categorías -->
+      <section id="tab-categorias" class="tab-content">
+        <div class="page-head">
+          <h2>Categorías</h2>
+          <p class="page-sub">Organiza el catálogo por tipo de producto.</p>
+        </div>
+        <div class="ticket-divider"></div>
+
+        <form id="form-categoria" class="inline-form admin-only">
+          <div class="field"><label>Nombre</label><input type="text" id="cat-nombre" required></div>
+          <div class="field"><label>Descripción</label><input type="text" id="cat-descripcion"></div>
+          <button type="submit" class="btn-primary">Crear categoría</button>
         </form>
-        <table id="tabla-categorias">
-        <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th class="admin-only">Acciones</th></tr></thead>
-        <tbody></tbody>
-        </table>
-    </section>
 
-    <section id="tab-productos" class="tab-content hidden">
-    <h2>Productos</h2>
-    <form id="form-producto" class="inline-form admin-only">
-        <input type="text" id="prod-nombre" placeholder="Nombre" required>
-        <input type="number" id="prod-precio" placeholder="Precio" step="0.01" required>
-        <input type="number" id="prod-stock" placeholder="Stock" required>
-        <select id="prod-categoria"></select>
-        <button type="submit">Crear</button>
-    </form>
-    <table id="tabla-productos">
-        <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th class="admin-only">Acciones</th></tr></thead>
-        <tbody></tbody>
-    </table>
-</section>
+        <div class="table-wrap">
+          <table id="tabla-categorias">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th class="admin-only">Acciones</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
 
-<section id="tab-ventas" class="tab-content hidden">
-    <h2>Registrar venta</h2>
-    <div id="items-venta"></div>
-    <button id="btn-agregar-item">+ Agregar producto</button>
-    <button id="btn-registrar-venta">Registrar venta</button>
-    <p id="venta-msg"></p>
+      <!-- Productos -->
+      <section id="tab-productos" class="tab-content hidden">
+        <div class="page-head">
+          <h2>Productos</h2>
+          <p class="page-sub">Precio, stock y categoría de cada producto.</p>
+        </div>
+        <div class="ticket-divider"></div>
 
-    <h3 class="admin-only">Ventas registradas</h3>
-    <table id="tabla-ventas" class="admin-only">
-        <thead><tr><th>ID</th><th>Fecha</th><th>Total</th></tr></thead>
-        <tbody></tbody>
-    </table>
-</section>
+        <form id="form-producto" class="inline-form admin-only">
+          <div class="field"><label>Nombre</label><input type="text" id="prod-nombre" required></div>
+          <div class="field"><label>Precio</label><input type="number" id="prod-precio" step="0.01" required></div>
+          <div class="field"><label>Stock</label><input type="number" id="prod-stock" required></div>
+          <div class="field"><label>Categoría</label><select id="prod-categoria"></select></div>
+          <button type="submit" class="btn-primary">Crear producto</button>
+        </form>
 
-<section id="tab-financiero" class="tab-content hidden">
-    <h2>Financiero</h2>
-    <div class="inline-form">
-        <label>Desde</label><input type="date" id="fin-desde">
-        <label>Hasta</label><input type="date" id="fin-hasta">
-        <button id="btn-consultar-financiero">Consultar balance</button>
-    </div>
-    <div id="resultado-financiero"></div>
+        <div class="table-wrap">
+          <table id="tabla-productos">
+            <thead><tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th><th>Categoría</th><th class="admin-only">Acciones</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
 
-    <h3>Registrar egreso</h3>
-    <form id="form-egreso" class="inline-form">
-        <input type="text" id="egreso-concepto" placeholder="Concepto" required>
-        <input type="number" id="egreso-valor" placeholder="Valor" step="0.01" required>
-        <input type="date" id="egreso-fecha" required>
-        <button type="submit">Registrar</button>
-    </form>
-</section>
+      <!-- Ventas -->
+      <section id="tab-ventas" class="tab-content hidden">
+        <div class="page-head">
+          <h2>Registrar venta</h2>
+          <p class="page-sub">Busca un producto y agrégalo al pedido.</p>
+        </div>
+        <div class="ticket-divider"></div>
 
-<section id="tab-reportes" class="tab-content hidden">
-    <h2>Reportes</h2>
-    <div class="inline-form">
-        <input type="date" id="rep-fecha">
-        <button id="btn-reporte-diario">Ver reporte diario</button>
-        <button id="btn-pdf-diario">Descargar PDF diario</button>
-    </div>
-    <div class="inline-form">
-        <input type="number" id="rep-anio" placeholder="Año">
-        <input type="number" id="rep-mes" placeholder="Mes" min="1" max="12">
-        <button id="btn-reporte-mensual">Ver reporte mensual</button>
-        <button id="btn-pdf-mensual">Descargar PDF mensual</button>
-    </div>
-    <div id="resultado-reporte"></div>
-    </section>
-</main>
+        <div class="venta-layout">
+          <div class="venta-buscador">
+            <label for="buscar-producto" class="field-label">Buscar producto</label>
+            <div class="search-box">
+              <input type="text" id="buscar-producto" placeholder="Escribe el nombre del producto…" autocomplete="off">
+            </div>
+            <ul id="resultados-busqueda" class="search-results hidden"></ul>
+          </div>
+
+          <div class="venta-pedido">
+            <h3>Pedido actual</h3>
+            <div id="items-venta" class="pedido-lista">
+              <p class="empty-state" id="pedido-vacio">Aún no has agregado productos.</p>
+            </div>
+            <div class="pedido-total">
+              <span>Total</span>
+              <strong id="venta-total">$0</strong>
+            </div>
+            <button id="btn-registrar-venta" class="btn-primary" style="width:100%;" disabled>Registrar venta</button>
+            <p id="venta-msg" class="form-msg"></p>
+          </div>
+        </div>
+
+        <div class="admin-only section-block">
+          <h3 style="margin-bottom:0.8rem;">Ventas registradas</h3>
+          <div class="table-wrap">
+            <table id="tabla-ventas">
+              <thead><tr><th>ID</th><th>Fecha</th><th>Total</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Financiero -->
+      <section id="tab-financiero" class="tab-content hidden">
+        <div class="page-head">
+          <h2>Financiero</h2>
+          <p class="page-sub">Ingresos, egresos y balance por período.</p>
+        </div>
+        <div class="ticket-divider"></div>
+
+        <div class="inline-form">
+          <div class="field"><label>Desde</label><input type="date" id="fin-desde"></div>
+          <div class="field"><label>Hasta</label><input type="date" id="fin-hasta"></div>
+          <button id="btn-consultar-financiero" class="btn-secondary">Consultar balance</button>
+        </div>
+        <div id="resultado-financiero" class="result-cards"></div>
+
+        <h3 style="margin:2rem 0 1rem;">Registrar egreso</h3>
+        <form id="form-egreso" class="inline-form">
+          <div class="field"><label>Concepto</label><input type="text" id="egreso-concepto" required></div>
+          <div class="field"><label>Valor</label><input type="number" id="egreso-valor" step="0.01" required></div>
+          <div class="field"><label>Fecha</label><input type="date" id="egreso-fecha" required></div>
+          <button type="submit" class="btn-primary">Registrar</button>
+        </form>
+      </section>
+
+      <!-- Reportes -->
+      <section id="tab-reportes" class="tab-content hidden">
+        <div class="page-head">
+          <h2>Reportes</h2>
+          <p class="page-sub">Resumen diario o mensual, con descarga en PDF.</p>
+        </div>
+        <div class="ticket-divider"></div>
+
+        <div class="inline-form">
+          <div class="field"><label>Fecha</label><input type="date" id="rep-fecha"></div>
+          <button id="btn-reporte-diario" class="btn-secondary">Ver reporte diario</button>
+          <button id="btn-pdf-diario" class="btn-ghost">Descargar PDF</button>
+        </div>
+        <div class="inline-form">
+          <div class="field"><label>Año</label><input type="number" id="rep-anio" placeholder="2026"></div>
+          <div class="field"><label>Mes</label><input type="number" id="rep-mes" min="1" max="12" placeholder="1-12"></div>
+          <button id="btn-reporte-mensual" class="btn-secondary">Ver reporte mensual</button>
+          <button id="btn-pdf-mensual" class="btn-ghost">Descargar PDF</button>
+        </div>
+
+        <div id="resultado-reporte"></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div id="toast-stack"></div>
 
 <script src="js/config.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

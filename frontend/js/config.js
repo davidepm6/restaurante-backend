@@ -1,5 +1,7 @@
 const API_BASE = "https://restaurante-backend-491b.onrender.com";
 
+
+
 /*2. Abre el frontend con Live Server** (clic derecho sobre `frontend/index.html` → "Open with Live Server"), **sin** necesidad de tener `uvicorn` corriendo en paralelo — todas las peticiones van a Render.
 
 **3. Inicia sesión** con cualquiera de tus usuarios (admin o empleado) y usa el sistema normalmente; los datos se guardan en tu NeonDB real, igual que en local.
