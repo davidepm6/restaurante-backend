@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from app import models
 from app.routers import auth, categorias, productos, ventas, egresos, financiero, reportes
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.routers import me
 
 app = FastAPI(title="Sistema de Gestión de Restaurante", version="1.0.0")
 
@@ -21,7 +21,7 @@ app.include_router(ventas.router)
 app.include_router(egresos.router)
 app.include_router(financiero.router)
 app.include_router(reportes.router)
-
+app.include_router(me.router)
 
 @app.get("/")
 def root():
