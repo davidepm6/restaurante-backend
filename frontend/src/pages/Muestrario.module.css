@@ -1,0 +1,4 @@
+.bloque { margin-bottom: 2.2rem; }
+.bloque h3 { font-size: 1.1rem; margin-bottom: 0.8rem; }
+.fila { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.campos { display: grid; gap: 1rem; max-width: 360px; }
