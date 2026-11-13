@@ -1,8 +1,13 @@
 import uuid
 from fastapi.testclient import TestClient
 from app.main import app
+from datetime import date, datetime, timedelta, timezone
 
 client = TestClient(app)
+
+def _hoy_utc() -> date:
+    # La base guarda las ventas en UTC y las consultas del backend comparan por día UTC.
+    return datetime.now(timezone.utc).date()
 
 
 def _crear_venta(admin_headers, precio=10000, cantidad=2):
@@ -29,18 +34,25 @@ def test_registrar_egreso_valida_valor_positivo(admin_headers):
 
 def test_ingresos_egresos_y_balance(admin_headers):
     _crear_venta(admin_headers, precio=20000, cantidad=1)
+
+    hoy = _hoy_utc().isoformat()
     client.post(
-        "/egresos/", json={"concepto": "Arriendo", "valor": 5000, "fecha": "2026-09-02"}, headers=admin_headers
+        "/egresos/",
+        json={"concepto": "Arriendo", "valor": 5000, "fecha": hoy},
+        headers=admin_headers,
     )
 
     ingresos = client.get(
-        "/financiero/ingresos?fecha_inicio=2026-09-02&fecha_fin=2026-09-02", headers=admin_headers
+        f"/financiero/ingresos?fecha_inicio={hoy}&fecha_fin={hoy}",
+        headers=admin_headers,
     ).json()
     egresos = client.get(
-        "/financiero/egresos?fecha_inicio=2026-09-02&fecha_fin=2026-09-02", headers=admin_headers
+        f"/financiero/egresos?fecha_inicio={hoy}&fecha_fin={hoy}",
+        headers=admin_headers,
     ).json()
     balance = client.get(
-        "/financiero/balance?fecha_inicio=2026-09-02&fecha_fin=2026-09-02", headers=admin_headers
+        f"/financiero/balance?fecha_inicio={hoy}&fecha_fin={hoy}",
+        headers=admin_headers,
     ).json()
 
     assert ingresos["total_ingresos"] >= 20000
