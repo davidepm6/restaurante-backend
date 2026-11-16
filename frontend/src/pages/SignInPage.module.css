@@ -1,0 +1,29 @@
+.pantalla { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+
+.marca {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem;
+    background: var(--ink);
+    color: var(--paper);
+}
+.marca h1 { font-size: 3.2rem; line-height: 1.05; margin-bottom: 1rem; color: var(--paper); }
+.marca p { color: #d8cdbb; max-width: 30ch; line-height: 1.5; }
+.marca::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 14px;
+    background: repeating-linear-gradient(90deg, var(--brass) 0 10px, transparent 10px 20px);
+    opacity: 0.5;
+}
+
+.formulario { display: flex; align-items: center; justify-content: center; padding: 2rem; background: var(--surface); }
+
+@media (max-width: 760px) {
+    .pantalla { grid-template-columns: 1fr; }
+    .marca { padding: 2.5rem 2rem 3.5rem; }
+    .marca h1 { font-size: 2.2rem; }
+}

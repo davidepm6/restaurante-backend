@@ -1,0 +1,14 @@
+.dialogo {
+    width: min(92vw, 440px);
+    padding: 0;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+.dialogo::backdrop { background: rgba(33, 26, 20, 0.55); }
+.contenido { padding: 1.4rem 1.5rem; }
+.titulo { font-size: 1.2rem; margin-bottom: 0.6rem; }
+.cuerpo { color: var(--ink-soft); font-size: 0.95rem; margin-bottom: 1.2rem; }
+.acciones { display: flex; justify-content: flex-end; gap: 0.6rem; }
