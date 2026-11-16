@@ -51,7 +51,7 @@ def obtener_principal(request: Request) -> Principal:
         raise no_autenticado
 
     if not estado.is_signed_in:
-        logger.info("Token rechazado: %s", estado.reason)  # el motivo se registra, no se devuelve
+        logger.warning("Token rechazado: %s", estado.reason)  # el motivo se registra, no se devuelve
         raise no_autenticado
 
     claims = estado.payload or {}

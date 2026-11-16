@@ -1,0 +1,30 @@
+.tarjeta {
+    max-width: 520px;
+    padding: 1.2rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+.tarjeta h3 { font-size: 1.05rem; margin-bottom: 0.8rem; }
+
+.fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 0.92rem;
+}
+.fila:last-child { border-bottom: none; }
+.etiqueta { color: var(--ink-soft); }
+.ok { color: var(--sage); font-weight: 600; }
+.error { color: var(--danger); }
+
+.reintentar {
+    margin-top: 0.8rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--paper);
+    cursor: pointer;
+}

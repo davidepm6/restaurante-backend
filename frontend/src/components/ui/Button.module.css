@@ -1,0 +1,37 @@
+.boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.boton:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.primario { background: var(--brick); color: #fff; }
+.primario:hover:not(:disabled) { background: var(--brick-dark); }
+
+.secundario { background: var(--ink); color: var(--paper); }
+.secundario:hover:not(:disabled) { opacity: 0.85; }
+
+.ghost { background: transparent; color: var(--ink-soft); border-color: var(--line-strong); font-weight: 500; }
+.ghost:hover:not(:disabled) { border-color: var(--brick); color: var(--brick); }
+
+.peligro { background: #7a1f12; color: #fff; }
+.peligro:hover:not(:disabled) { background: #5e170d; }
+
+.spinner {
+    width: 0.9em;
+    height: 0.9em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: giro 0.7s linear infinite;
+}
+@keyframes giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }

@@ -1,0 +1,20 @@
+.envoltura {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+.tabla { width: 100%; border-collapse: collapse; }
+.tabla th, .tabla td { padding: 0.7rem 0.9rem; text-align: left; font-size: 0.92rem; }
+.tabla thead th {
+    background: var(--paper);
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+.tabla tbody tr:not(:last-child) td { border-bottom: 1px solid var(--line); }
+.tabla tbody tr:hover td { background: rgba(168, 68, 46, 0.04); }
+.derecha { text-align: right !important; }
+.mensaje { text-align: center !important; color: var(--ink-soft); padding: 1.6rem 1rem !important; }
