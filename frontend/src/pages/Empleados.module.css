@@ -1,0 +1,22 @@
+.formulario {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+}
+.campoRol { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); }
+.selector {
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+}
+.selector:disabled { opacity: 0.6; }
+.seccion { font-size: 1.1rem; margin: 2rem 0 0.8rem; }
+.yo { color: var(--ink-soft); font-size: 0.85rem; }
+.activo { color: var(--sage); font-weight: 600; }
+.inactivo { color: var(--danger); font-weight: 600; }
+.error { color: var(--danger); margin-bottom: 1rem; }
