@@ -1,6 +1,12 @@
 import os
-
 import pytest
+
+import time  # noqa: E402
+
+import jwt as pyjwt  # noqa: E402
+from cryptography.hazmat.primitives import serialization  # noqa: E402
+from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
+
 from dotenv import dotenv_values, load_dotenv
 
 # --- Guardia de seguridad (HU28): las pruebas SOLO corren contra la base de pruebas ---
@@ -56,3 +62,51 @@ def admin_headers():
 @pytest.fixture(scope="session")
 def empleado_headers():
     return _headers_para("empleado_pytest@correo.com", RolUsuario.EMPLEADO)
+
+ORIGEN_PRUEBAS = "http://localhost:5173"
+
+_clave_privada = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+_PEM_PRIVADA = _clave_privada.private_bytes(
+    serialization.Encoding.PEM,
+    serialization.PrivateFormat.PKCS8,
+    serialization.NoEncryption(),
+)
+_PEM_PUBLICA = _clave_privada.public_key().public_bytes(
+    serialization.Encoding.PEM,
+    serialization.PublicFormat.SubjectPublicKeyInfo,
+).decode()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def entorno_clerk_pruebas():
+    os.environ["CLERK_JWT_KEY"] = _PEM_PUBLICA
+    os.environ["CLERK_AUTHORIZED_PARTIES"] = ORIGEN_PRUEBAS
+    os.environ.pop("CLERK_SECRET_KEY", None)
+    yield
+
+
+def _headers_clerk(sub: str, rol: str | None, nombre: str, email: str) -> dict:
+    ahora = int(time.time())
+    claims = {
+        "sub": sub, "sid": "sess_pytest", "azp": ORIGEN_PRUEBAS,
+        "iat": ahora, "nbf": ahora - 5, "exp": ahora + 3600,
+        "nombre": nombre, "email": email,
+        "metadata": {"role": rol} if rol else {},
+    }
+    token = pyjwt.encode(claims, _PEM_PRIVADA, algorithm="RS256")
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="session")
+def admin_clerk_headers():
+    return _headers_clerk("user_pytest_admin", "ADMINISTRADOR", "Admin Pytest", "admin.clerk@correo.com")
+
+
+@pytest.fixture(scope="session")
+def empleado_clerk_headers():
+    return _headers_clerk("user_pytest_empleado", "EMPLEADO", "Empleado Pytest", "empleado.clerk@correo.com")
+
+
+@pytest.fixture(scope="session")
+def sin_rol_clerk_headers():
+    return _headers_clerk("user_pytest_sinrol", None, "Sin Rol", "sinrol.clerk@correo.com")
