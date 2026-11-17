@@ -28,3 +28,12 @@
     background: var(--paper);
     cursor: pointer;
 }
+
+.aviso {
+    margin-top: 0.8rem;
+    padding: 0.7rem 0.9rem;
+    background: var(--paper);
+    border-left: 3px solid var(--brass);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}

@@ -25,6 +25,10 @@ def _nuevo_par_de_claves():
     ).decode()
     return pem_privada, pem_publica
 
+def test_rol_desconocido_se_trata_como_sin_rol(claves):
+    r = _get_me(_token(claves[0], metadata={"role": "superadmin"}))
+    assert r.status_code == 200
+    assert r.json()["role"] is None
 
 @pytest.fixture(scope="module")
 def claves():

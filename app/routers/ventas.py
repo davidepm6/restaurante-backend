@@ -39,7 +39,12 @@ def registrar_venta(
         productos_map[item.producto_id] = producto
 
     try:
-        nueva_venta = Venta(total=0, usuario_id=usuario.id)
+        nueva_venta = Venta(
+            total=0,
+            usuario_id=usuario.id,  # solo con el login antiguo; None con Clerk
+            registrada_por=usuario.clerk_user_id,
+            registrada_por_nombre=usuario.nombre,
+        )
         db.add(nueva_venta)
         db.flush()
 

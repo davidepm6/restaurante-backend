@@ -44,6 +44,12 @@ export default function Inicio() {
                 </div>
             </>
             )}
+            {data && data.role === null && (
+                <p className={styles.aviso} role="status">
+                Tu cuenta aún no tiene un rol asignado. Pide a un administrador que te lo asigne y vuelve a iniciar sesión.
+            </p>
+        )}
+
         </section>
         </>
     )
