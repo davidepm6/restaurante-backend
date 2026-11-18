@@ -2,6 +2,7 @@ import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 from datetime import date, datetime, timedelta, timezone
+from app.zona_horaria import hoy_negocio
 
 client = TestClient(app)
 
@@ -35,7 +36,7 @@ def test_registrar_egreso_valida_valor_positivo(admin_headers):
 def test_ingresos_egresos_y_balance(admin_headers):
     _crear_venta(admin_headers, precio=20000, cantidad=1)
 
-    hoy = _hoy_utc().isoformat()
+    hoy = hoy_negocio().isoformat()
     client.post(
         "/egresos/",
         json={"concepto": "Arriendo", "valor": 5000, "fecha": hoy},

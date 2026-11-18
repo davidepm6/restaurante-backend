@@ -10,6 +10,7 @@ from app.models.detalle_venta import DetalleVenta
 from app.schemas.venta import VentaCreate, VentaOut, DetalleVentaOut
 from app.security.dependencies import requiere_rol
 from app.models.usuario import RolUsuario
+from app.zona_horaria import limites_dia
 
 router = APIRouter(prefix="/ventas", tags=["Ventas"])
 
@@ -103,10 +104,9 @@ def listar_ventas(
     query = db.query(Venta)
 
     if fecha_inicio:
-        query = query.filter(Venta.fecha >= datetime.combine(fecha_inicio, datetime.min.time()))
+        query = query.filter(Venta.fecha >= limites_dia(fecha_inicio, fecha_inicio)[0])
     if fecha_fin:
-        query = query.filter(Venta.fecha <= datetime.combine(fecha_fin, datetime.max.time()))
-
+        query = query.filter(Venta.fecha < limites_dia(fecha_fin, fecha_fin)[1])
     ventas = query.order_by(Venta.fecha.desc()).all()
 
     resultado = []

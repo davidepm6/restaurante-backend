@@ -16,14 +16,16 @@ from app.models.producto import Producto
 from app.models.egreso import Egreso
 from app.security.dependencies import requiere_rol
 from app.models.usuario import RolUsuario
+from app.zona_horaria import ZONA_NEGOCIO, hoy_negocio, limites_dia
 
 router = APIRouter(prefix="/reportes", tags=["Reportes"])
 
 
 def _armar_reporte(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
+    desde, hasta = limites_dia(fecha_inicio, fecha_fin)
+
     ventas_total = db.query(func.sum(Venta.total)).filter(
-        Venta.fecha >= datetime.combine(fecha_inicio, datetime.min.time()),
-        Venta.fecha <= datetime.combine(fecha_fin, datetime.max.time())
+        Venta.fecha >= desde, Venta.fecha < hasta
     ).scalar() or 0
 
     egresos_total = db.query(func.sum(Egreso.valor)).filter(
@@ -35,8 +37,7 @@ def _armar_reporte(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
     ).join(DetalleVenta, DetalleVenta.producto_id == Producto.id).join(
         Venta, Venta.id == DetalleVenta.venta_id
     ).filter(
-        Venta.fecha >= datetime.combine(fecha_inicio, datetime.min.time()),
-        Venta.fecha <= datetime.combine(fecha_fin, datetime.max.time())
+        Venta.fecha >= desde, Venta.fecha < hasta
     ).group_by(Producto.nombre).order_by(func.sum(DetalleVenta.cantidad).desc()).all()
 
     return {
@@ -59,7 +60,7 @@ def _generar_pdf(titulo: str, reporte: dict) -> BytesIO:
     c.drawString(50, y, titulo)
     y -= 20
     c.setFont("Helvetica", 10)
-    c.drawString(50, y, f"Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    c.drawString(50, y, f"Generado el: {datetime.now(ZONA_NEGOCIO).strftime('%Y-%m-%d %H:%M')} (hora de Colombia)")
     y -= 30
 
     c.setFont("Helvetica-Bold", 12)
@@ -95,7 +96,7 @@ def _generar_pdf(titulo: str, reporte: dict) -> BytesIO:
 
 @router.get("/diario")
 def reporte_diario(
-    fecha: date = Query(default_factory=date.today),
+    fecha: date = Query(default_factory=hoy_negocio),
     db: Session = Depends(get_db),
     _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
@@ -115,7 +116,7 @@ def reporte_mensual(
 
 @router.get("/diario/pdf")
 def reporte_diario_pdf(
-    fecha: date = Query(default_factory=date.today),
+    fecha: date = Query(default_factory=hoy_negocio),
     db: Session = Depends(get_db),
     _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
 ):
