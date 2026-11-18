@@ -3,6 +3,8 @@
 
 Proyecto Integrador (Parquesoft) — API REST para administrar categorías, productos, ventas, inventario e información financiera (ingresos, egresos y balance) de un restaurante, con autenticación por roles y generación de reportes en PDF.
 
+![CI](https://github.com/davidepm6/restaurante-backend/actions/workflows/ci.yml/badge.svg)
+
 > Documentación relacionada: [`Backlog.MD`](./Backlog.MD) (historias de usuario) · [`progress.MD`](./progress.MD) (seguimiento de implementación) · [`CLAUDE.md`](./CLAUDE.md) (contexto y lineamientos técnicos del proyecto).
 
 ---
