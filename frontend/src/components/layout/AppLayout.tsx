@@ -1,18 +1,13 @@
 import { NavLink, Outlet } from 'react-router'
 import { UserButton } from '@clerk/react'
-import styles from './AppLayout.module.css'
 import { useMe } from '../../api/me'
-
-// En los siguientes sprints se agregan aquí las demás secciones (según el rol).
-const ENLACES = [
-    { to: '/', etiqueta: 'Inicio', end: true, soloAdmin: false },
-    { to: '/empleados', etiqueta: 'Empleados', end: false, soloAdmin: true },
-    ...(import.meta.env.DEV ? [{ to: '/muestrario', etiqueta: 'Muestrario', end: false, soloAdmin: false }] : []),
-]
+import { rutasVisibles } from '../../auth/rutas'
+import styles from './AppLayout.module.css'
 
 export function AppLayout() {
     const { data: me } = useMe()
-        const enlaces = ENLACES.filter((e) => !e.soloAdmin || me?.role === 'ADMINISTRADOR')
+    const enlaces = rutasVisibles(me?.role)
+
     return (
         <div className={styles.shell}>
         <aside className={styles.sidebar}>
@@ -20,10 +15,10 @@ export function AppLayout() {
             <div className={styles.marcaSub}>Panel de gestión</div>
             <nav aria-label="Principal">
             <ul className={styles.lista}>
-                {enlaces.map(({ to, etiqueta, end }) => (
-                <li key={to}>
+                {enlaces.map(({ ruta, etiqueta, end }) => (
+                <li key={ruta}>
                     <NavLink
-                    to={to}
+                    to={ruta}
                     end={end}
                     className={({ isActive }) =>
                         isActive ? `${styles.enlace} ${styles.activo}` : styles.enlace
