@@ -90,3 +90,36 @@ def test_producto_con_nombre_vacio_responde_422(admin_clerk_headers):
         headers=admin_clerk_headers,
     )
     assert r.status_code == 422
+    
+    def test_precio_demasiado_alto_responde_422(admin_clerk_headers):
+        cat = _crear_categoria(admin_clerk_headers)
+        r = client.post(
+            "/productos/",
+            json={"nombre": "Caro", "precio": 100_000_000, "stock": 1, "categoria_id": cat["id"]},
+            headers=admin_clerk_headers,
+        )
+    assert r.status_code == 422
+
+
+def test_stock_demasiado_alto_responde_422(admin_clerk_headers):
+    cat = _crear_categoria(admin_clerk_headers)
+    r = client.post(
+        "/productos/",
+        json={"nombre": "Mucho", "precio": 1000, "stock": 1_000_001, "categoria_id": cat["id"]},
+        headers=admin_clerk_headers,
+    )
+    assert r.status_code == 422
+
+
+def test_los_productos_se_listan_en_orden_alfabetico(admin_clerk_headers):
+    cat = _crear_categoria(admin_clerk_headers)
+    for nombre in ["Zumo", "Arepa", "Mazorca"]:
+        r = client.post(
+            "/productos/",
+            json={"nombre": nombre, "precio": 1000, "stock": 1, "categoria_id": cat["id"]},
+            headers=admin_clerk_headers,
+        )
+        assert r.status_code == 201
+    r = client.get("/productos/", headers=admin_clerk_headers)
+    nombres = [p["nombre"] for p in r.json() if p["categoria_id"] == cat["id"]]
+    assert nombres == ["Arepa", "Mazorca", "Zumo"]

@@ -1,0 +1,13 @@
+.campo { display: flex; flex-direction: column; gap: 0.35rem; }
+.etiqueta { font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); }
+.selector {
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+}
+.selector:focus-visible { outline: 2px solid var(--brick); outline-offset: 1px; border-color: var(--brick); }
+.conError { border-color: var(--danger); }
+.error { font-size: 0.82rem; color: var(--danger); }
