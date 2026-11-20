@@ -18,6 +18,7 @@ router = APIRouter(prefix="/financiero", tags=["Financiero"])
 def _calcular_ingresos(db: Session, fecha_inicio: date, fecha_fin: date) -> float:
     desde, hasta = limites_dia(fecha_inicio, fecha_fin)
     resultado = db.query(func.sum(Venta.total)).filter(
+        Venta.estado == "COMPLETADA",
         Venta.fecha >= desde,
         Venta.fecha < hasta
     ).scalar()

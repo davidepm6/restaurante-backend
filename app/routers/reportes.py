@@ -25,7 +25,7 @@ def _armar_reporte(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
     desde, hasta = limites_dia(fecha_inicio, fecha_fin)
 
     ventas_total = db.query(func.sum(Venta.total)).filter(
-        Venta.fecha >= desde, Venta.fecha < hasta
+        Venta.estado == "COMPLETADA", Venta.fecha >= desde, Venta.fecha < hasta
     ).scalar() or 0
 
     egresos_total = db.query(func.sum(Egreso.valor)).filter(
@@ -37,7 +37,7 @@ def _armar_reporte(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
     ).join(DetalleVenta, DetalleVenta.producto_id == Producto.id).join(
         Venta, Venta.id == DetalleVenta.venta_id
     ).filter(
-        Venta.fecha >= desde, Venta.fecha < hasta
+        Venta.estado == "COMPLETADA", Venta.fecha >= desde, Venta.fecha < hasta
     ).group_by(Producto.nombre).order_by(func.sum(DetalleVenta.cantidad).desc()).all()
 
     return {
@@ -49,7 +49,6 @@ def _armar_reporte(db: Session, fecha_inicio: date, fecha_fin: date) -> dict:
         "balance": float(ventas_total) - float(egresos_total),
         "productos_vendidos": [{"producto": p[0], "cantidad": p[1]} for p in productos_vendidos]
     }
-
 
 def _generar_pdf(titulo: str, reporte: dict) -> BytesIO:
     buffer = BytesIO()

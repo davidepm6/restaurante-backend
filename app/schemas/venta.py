@@ -1,14 +1,22 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 
 class MetodoPago(str, Enum):
     EFECTIVO = "EFECTIVO"
     TARJETA = "TARJETA"
     TRANSFERENCIA = "TRANSFERENCIA"
+
+
+class EstadoVenta(str, Enum):
+    COMPLETADA = "COMPLETADA"
+    ANULADA = "ANULADA"
+
+
+MotivoTexto = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=255)]
 
 
 class ItemVentaCreate(BaseModel):
@@ -19,6 +27,10 @@ class ItemVentaCreate(BaseModel):
 class VentaCreate(BaseModel):
     items: List[ItemVentaCreate]
     metodo_pago: MetodoPago
+
+
+class AnulacionCreate(BaseModel):
+    motivo: MotivoTexto
 
 
 class DetalleVentaOut(BaseModel):
@@ -36,6 +48,11 @@ class VentaOut(BaseModel):
     fecha: datetime
     total: float
     metodo_pago: Optional[MetodoPago] = None
+    estado: EstadoVenta = EstadoVenta.COMPLETADA
+    registrada_por_nombre: Optional[str] = None
+    anulada_en: Optional[datetime] = None
+    anulada_por_nombre: Optional[str] = None
+    motivo_anulacion: Optional[str] = None
     detalles: List[DetalleVentaOut]
 
     model_config = ConfigDict(from_attributes=True)
