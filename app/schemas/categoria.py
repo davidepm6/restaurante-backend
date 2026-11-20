@@ -1,17 +1,24 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from pydantic import BaseModel, ConfigDict
+
+from app.schemas.tipos import DescripcionTexto, NombreTexto
+
 
 class CategoriaBase(BaseModel):
-    nombre: str
-    descripcion: Optional[str] = None
+    nombre: NombreTexto
+    descripcion: Optional[DescripcionTexto] = None
+
 
 class CategoriaCreate(CategoriaBase):
     pass
 
+
 class CategoriaUpdate(BaseModel):
-    nombre: Optional[str] = None
-    descripcion: Optional[str] = None
+    nombre: Optional[NombreTexto] = None
+    descripcion: Optional[DescripcionTexto] = None
+
 
 class CategoriaOut(CategoriaBase):
     id: int

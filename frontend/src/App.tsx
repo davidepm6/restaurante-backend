@@ -9,6 +9,7 @@ import Inicio from './pages/Inicio'
 import Muestrario from './pages/Muestrario'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
+import Categorias from './pages/Categorias'
 
 function protegida(ruta: string, elemento: ReactElement) {
   const definicion = RUTAS.find((r) => r.ruta === ruta)
@@ -30,6 +31,7 @@ export default function App() {
         }
       >
         <Route index element={<Inicio />} />
+        <Route path="categorias" element={protegida('/categorias', <Categorias />)} />
         <Route path="empleados" element={protegida('/empleados', <Empleados />)} />
         {import.meta.env.DEV && <Route path="muestrario" element={protegida('/muestrario', <Muestrario />)} />}
       </Route>

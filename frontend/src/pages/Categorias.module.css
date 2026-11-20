@@ -1,0 +1,10 @@
+.cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.acciones { display: flex; gap: 0.4rem; justify-content: flex-end; }
+.formulario { display: grid; gap: 1rem; }
+.error { color: var(--danger); margin-bottom: 1rem; }
