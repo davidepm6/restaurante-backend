@@ -50,7 +50,7 @@ def test_venta_con_clerk_guarda_quien_la_registro(admin_clerk_headers, empleado_
 
     r = client.post(
         "/ventas/",
-        json={"items": [{"producto_id": prod["id"], "cantidad": 2}]},
+        json={"metodo_pago": "EFECTIVO", "items": [{"producto_id": prod["id"], "cantidad": 2}]},
         headers=empleado_clerk_headers,
     )
     assert r.status_code == 201
