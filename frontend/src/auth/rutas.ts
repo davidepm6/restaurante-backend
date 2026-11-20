@@ -10,9 +10,10 @@ export interface RutaApp {
 
 const ADMIN: Rol[] = ['ADMINISTRADOR']
 
-// Aquí se agregan las secciones nuevas (categorías, productos, ventas…) con sus roles.
+// Aquí se agregan las secciones nuevas (productos, ventas…) con sus roles.
 export const RUTAS: RutaApp[] = [
     { ruta: '/', etiqueta: 'Inicio', roles: 'cualquiera', end: true },
+    { ruta: '/categorias', etiqueta: 'Categorías', roles: ADMIN },
     { ruta: '/empleados', etiqueta: 'Empleados', roles: ADMIN },
     ...(import.meta.env.DEV ? [{ ruta: '/muestrario', etiqueta: 'Muestrario', roles: ADMIN }] : []),
 ]

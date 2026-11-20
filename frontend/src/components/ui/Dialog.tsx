@@ -11,11 +11,14 @@ interface DialogProps {
     textoCancelar?: string
     peligro?: boolean
     cargando?: boolean
-    onConfirmar: () => void
+    /** Id de un <form> dentro del diálogo: el botón de confirmar lo envía. */
+    formId?: string
+    /** Se ignora cuando hay formId (la acción la define el onSubmit del formulario). */
+    onConfirmar?: () => void
     onCancelar: () => void
-    }
+}
 
-    export function Dialog({
+export function Dialog({
     abierto,
     titulo,
     children,
@@ -23,9 +26,10 @@ interface DialogProps {
     textoCancelar = 'Cancelar',
     peligro = false,
     cargando = false,
+    formId,
     onConfirmar,
     onCancelar,
-    }: DialogProps) {
+}: DialogProps) {
     const ref = useRef<HTMLDialogElement>(null)
     const idTitulo = useId()
 
@@ -54,7 +58,13 @@ interface DialogProps {
             <div className={styles.cuerpo}>{children}</div>
             <div className={styles.acciones}>
             <Button variante="ghost" onClick={onCancelar} disabled={cargando}>{textoCancelar}</Button>
-            <Button variante={peligro ? 'peligro' : 'primario'} onClick={onConfirmar} cargando={cargando}>
+            <Button
+                variante={peligro ? 'peligro' : 'primario'}
+                type={formId ? 'submit' : 'button'}
+                form={formId}
+                onClick={formId ? undefined : onConfirmar}
+                cargando={cargando}
+            >
                 {textoConfirmar}
             </Button>
             </div>
