@@ -31,7 +31,7 @@ def listar_productos(
     db: Session = Depends(get_db),
     _=Depends(obtener_usuario_actual)
 ):
-    return db.query(Producto).filter(Producto.activo == True).all()
+        return db.query(Producto).filter(Producto.activo == True).order_by(Producto.nombre).all()
 
 
 @router.get("/{producto_id}", response_model=ProductoOut)
