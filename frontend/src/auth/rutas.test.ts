@@ -4,12 +4,14 @@ import { rutasVisibles } from './rutas'
 const rutas = (rol: Parameters<typeof rutasVisibles>[0]) => rutasVisibles(rol).map((r) => r.ruta)
 
 describe('rutasVisibles', () => {
-    it('el administrador ve empleados, categorías y productos', () => {
-    expect(rutas('ADMINISTRADOR')).toEqual(expect.arrayContaining(['/empleados', '/categorias', '/productos']))
-    })
+    it('el administrador ve todas las secciones de gestión', () => {
+    expect(rutas('ADMINISTRADOR')).toEqual(
+        expect.arrayContaining(['/punto-de-venta', '/empleados', '/categorias', '/productos']),
+    )
+})
 
-it('el empleado ve los productos pero no la gestión', () => {
-    expect(rutas('EMPLEADO')).toContain('/productos')
+it('el empleado ve el punto de venta y los productos, pero no la gestión', () => {
+    expect(rutas('EMPLEADO')).toEqual(expect.arrayContaining(['/punto-de-venta', '/productos']))
     expect(rutas('EMPLEADO')).not.toContain('/empleados')
     expect(rutas('EMPLEADO')).not.toContain('/categorias')
 })
