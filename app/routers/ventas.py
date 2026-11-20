@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import datetime, date
+from datetime import date
 from typing import Optional, List
 
 from app.database import get_db
@@ -24,20 +24,27 @@ def registrar_venta(
     if not venta.items:
         raise HTTPException(status_code=400, detail="La venta debe tener al menos un producto")
 
-    productos_map = {}
+    # Si un mismo producto llega en varias líneas, se suman sus cantidades antes de validar el stock.
+    cantidades: dict[int, int] = {}
     for item in venta.items:
+        cantidades[item.producto_id] = cantidades.get(item.producto_id, 0) + item.cantidad
+
+    # Se bloquea la fila de cada producto (en orden de id, para evitar bloqueos cruzados) hasta que
+    # termine la transacción: dos ventas simultáneas no pueden vender el mismo stock dos veces.
+    productos_map: dict[int, Producto] = {}
+    for producto_id in sorted(cantidades):
         producto = db.query(Producto).filter(
-            Producto.id == item.producto_id,
+            Producto.id == producto_id,
             Producto.activo == True
-        ).first()
+        ).with_for_update().first()
         if not producto:
-            raise HTTPException(status_code=404, detail=f"Producto {item.producto_id} no encontrado o inactivo")
-        if item.cantidad > producto.stock:
+            raise HTTPException(status_code=404, detail=f"Producto {producto_id} no encontrado o inactivo")
+        if cantidades[producto_id] > producto.stock:
             raise HTTPException(
                 status_code=400,
-                detail=f"Stock insuficiente para '{producto.nombre}' (disponible: {producto.stock}, solicitado: {item.cantidad})"
+                detail=f"Stock insuficiente para '{producto.nombre}' (disponible: {producto.stock}, solicitado: {cantidades[producto_id]})"
             )
-        productos_map[item.producto_id] = producto
+        productos_map[producto_id] = producto
 
     try:
         nueva_venta = Venta(
@@ -45,6 +52,7 @@ def registrar_venta(
             usuario_id=usuario.id,  # solo con el login antiguo; None con Clerk
             registrada_por=usuario.clerk_user_id,
             registrada_por_nombre=usuario.nombre,
+            metodo_pago=venta.metodo_pago.value,
         )
         db.add(nueva_venta)
         db.flush()
@@ -52,22 +60,22 @@ def registrar_venta(
         total_venta = 0
         detalles_creados = []
 
-        for item in venta.items:
-            producto = productos_map[item.producto_id]
-            subtotal = float(producto.precio) * item.cantidad
+        for producto_id, cantidad in cantidades.items():
+            producto = productos_map[producto_id]
+            subtotal = float(producto.precio) * cantidad
             total_venta += subtotal
 
             detalle = DetalleVenta(
                 venta_id=nueva_venta.id,
                 producto_id=producto.id,
-                cantidad=item.cantidad,
+                cantidad=cantidad,
                 precio_unitario=producto.precio,
                 subtotal=subtotal
             )
             db.add(detalle)
             detalles_creados.append((detalle, producto.nombre))
 
-            producto.stock -= item.cantidad
+            producto.stock -= cantidad
 
         nueva_venta.total = total_venta
         db.commit()
@@ -81,6 +89,7 @@ def registrar_venta(
         id=nueva_venta.id,
         fecha=nueva_venta.fecha,
         total=float(nueva_venta.total),
+        metodo_pago=nueva_venta.metodo_pago,
         detalles=[
             DetalleVentaOut(
                 producto_id=d.producto_id,
@@ -107,6 +116,7 @@ def listar_ventas(
         query = query.filter(Venta.fecha >= limites_dia(fecha_inicio, fecha_inicio)[0])
     if fecha_fin:
         query = query.filter(Venta.fecha < limites_dia(fecha_fin, fecha_fin)[1])
+
     ventas = query.order_by(Venta.fecha.desc()).all()
 
     resultado = []
@@ -121,7 +131,9 @@ def listar_ventas(
             )
             for d in v.detalles
         ]
-        resultado.append(VentaOut(id=v.id, fecha=v.fecha, total=float(v.total), detalles=detalles))
+        resultado.append(
+            VentaOut(id=v.id, fecha=v.fecha, total=float(v.total), metodo_pago=v.metodo_pago, detalles=detalles)
+        )
     return resultado
 
 
@@ -144,4 +156,6 @@ def obtener_venta(
         )
         for d in venta.detalles
     ]
-    return VentaOut(id=venta.id, fecha=venta.fecha, total=float(venta.total), detalles=detalles)
+    return VentaOut(
+        id=venta.id, fecha=venta.fecha, total=float(venta.total), metodo_pago=venta.metodo_pago, detalles=detalles
+    )

@@ -90,3 +90,4 @@
     .pagina { grid-template-columns: 1fr; }
     .pedido { position: static; }
 }
+.pista { margin: -0.4rem 0 0.9rem; color: var(--ink-soft); font-size: 0.85rem; }

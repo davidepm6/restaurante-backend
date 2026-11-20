@@ -1,0 +1,18 @@
+.grupo { border: none; margin: 0 0 1rem; padding: 0; min-width: 0; }
+.leyenda { font-size: 0.82rem; font-weight: 600; color: var(--ink-soft); margin-bottom: 0.4rem; padding: 0; }
+.opciones { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.9rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface);
+    cursor: pointer;
+    font-weight: 500;
+}
+.opcion:hover { border-color: var(--brick); }
+.opcion:has(input:focus-visible) { outline: 2px solid var(--brick); outline-offset: 2px; }
+.elegida { border-color: var(--brick); background: rgba(168, 68, 46, 0.08); color: var(--brick-dark); font-weight: 600; }
+.opcion input { accent-color: var(--brick); }

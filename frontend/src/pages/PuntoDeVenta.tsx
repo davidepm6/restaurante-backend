@@ -1,12 +1,14 @@
 import { useEffect, useReducer, useState } from 'react'
 import type { Dispatch } from 'react'
-import { useCategorias, useProductos } from '../api/catalogo'
-import { useRegistrarVenta, type Venta } from '../api/ventas'
+import { useCategorias, useProductos, type Producto } from '../api/catalogo'
+import { useRegistrarVenta, type MetodoPago, type Venta } from '../api/ventas'
 import { BuscadorProductos } from '../components/pos/BuscadorProductos'
+import { SelectorPago } from '../components/pos/SelectorPago'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/toast-context'
 import { mensajeDeError } from '../lib/errores'
 import { formatoMoneda } from '../lib/format'
+import { etiquetaMetodo } from '../lib/pago'
 import {
     aItemsVenta,
     limitarCantidad,
@@ -17,7 +19,6 @@ import {
     type AccionPedido,
     type LineaPedido,
     } from '../lib/pedido'
-    import type { Producto } from '../api/catalogo'
     import styles from './PuntoDeVenta.module.css'
 
     function LineaPedidoFila({ linea, despachar }: { linea: LineaPedido; despachar: Dispatch<AccionPedido> }) {
@@ -95,6 +96,7 @@ import {
     const registrar = useRegistrarVenta()
 
     const [pedido, despachar] = useReducer(pedidoReducer, [])
+    const [metodo, setMetodo] = useState<MetodoPago | null>(null)
     const [ultimaVenta, setUltimaVenta] = useState<Venta | null>(null)
     const [senalEnfocar, setSenalEnfocar] = useState(0)
 
@@ -119,19 +121,25 @@ import {
     }
 
     function confirmar() {
-        if (pedido.length === 0) return
-        registrar.mutate(aItemsVenta(pedido), {
-        onSuccess: (venta) => {
+        // El método de pago es obligatorio: no hay valor por defecto a propósito.
+        if (pedido.length === 0 || metodo === null) return
+        registrar.mutate(
+        { items: aItemsVenta(pedido), metodo_pago: metodo },
+        {
+            onSuccess: (venta) => {
             despachar({ tipo: 'vaciar' })
+            setMetodo(null)
             setUltimaVenta(venta)
             avisar(`Venta #${venta.id} registrada`, 'ok')
             setSenalEnfocar((n) => n + 1)
+            },
+            onError: (err) => avisar(mensajeDeError(err), 'error'),
         },
-        onError: (err) => avisar(mensajeDeError(err), 'error'),
-        })
+        )
     }
 
     const cantidadEnPedido = (id: number) => pedido.find((l) => l.productoId === id)?.cantidad ?? 0
+    const puedeConfirmar = pedido.length > 0 && metodo !== null
 
     return (
         <>
@@ -181,8 +189,14 @@ import {
                 </output>
             </div>
 
+            <SelectorPago valor={metodo} onCambiar={setMetodo} deshabilitado={registrar.isPending} />
+
+            {pedido.length > 0 && metodo === null && (
+                <p className={styles.pista}>Elige el método de pago para confirmar la venta.</p>
+            )}
+
             <div className={styles.acciones}>
-                <Button onClick={confirmar} disabled={pedido.length === 0} cargando={registrar.isPending}>
+                <Button onClick={confirmar} disabled={!puedeConfirmar} cargando={registrar.isPending}>
                 Confirmar venta
                 </Button>
                 {pedido.length > 0 && (
@@ -194,11 +208,13 @@ import {
 
             {ultimaVenta && (
                 <p className={styles.ultima} role="status">
-                Venta #{ultimaVenta.id} registrada · Total {formatoMoneda(ultimaVenta.total)}
+                Venta #{ultimaVenta.id} registrada
+                {ultimaVenta.metodo_pago ? ` · ${etiquetaMetodo(ultimaVenta.metodo_pago)}` : ''} · Total{' '}
+                {formatoMoneda(ultimaVenta.total)}
                 </p>
             )}
             </section>
         </div>
         </>
     )
-    }
+}

@@ -21,7 +21,7 @@ def _crear_venta(admin_headers, precio=10000, cantidad=2):
     ).json()
     client.post(
         "/ventas/",
-        json={"items": [{"producto_id": prod["id"], "cantidad": cantidad}]},
+        json={"metodo_pago": "EFECTIVO", "items": [{"producto_id": prod["id"], "cantidad": cantidad}]},
         headers=admin_headers
     )
 

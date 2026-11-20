@@ -13,5 +13,7 @@ class Venta(Base):
 
     registrada_por = Column(String(64), nullable=True, index=True)  # clerk_user_id
     registrada_por_nombre = Column(String(150), nullable=True)
+    metodo_pago = Column(String(20), nullable=True)  # EFECTIVO | TARJETA | TRANSFERENCIA (nulo en ventas antiguas)
 
     detalles = relationship("DetalleVenta", back_populates="venta", cascade="all, delete-orphan")
+    

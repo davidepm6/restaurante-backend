@@ -63,7 +63,8 @@ const PRODUCTOS = [
 
         expect(pedido().getByLabelText('Cantidad de Limonada natural')).toHaveValue('3')
         expect(pedido().getByRole('button', { name: 'Aumentar cantidad de Limonada natural' })).toBeDisabled()
-            expect((await screen.findAllByText(/No hay más stock disponible/)).length).toBeGreaterThan(0)
+        // Los intentos de más generan un aviso cada uno, así que puede haber varios.
+        expect((await screen.findAllByText(/No hay más stock disponible/)).length).toBeGreaterThan(0)
     })
 
     it('no agrega un producto agotado', async () => {
@@ -86,22 +87,39 @@ const PRODUCTOS = [
         expect(pedido().getByText('Aún no has agregado productos.')).toBeInTheDocument()
     })
 
-    it('al confirmar envía los productos y cantidades, y vacía el pedido', async () => {
-        mutar.mockImplementation((_items: unknown, opciones: { onSuccess: (v: unknown) => void }) =>
-        opciones.onSuccess({ id: 7, total: 34000 }),
+    it('sin método de pago no se puede confirmar', async () => {
+        const { user, buscador, pedido } = montar()
+        await user.type(buscador, 'hamb{Enter}')
+
+        expect(pedido().getByRole('button', { name: 'Confirmar venta' })).toBeDisabled()
+        expect(pedido().getByText('Elige el método de pago para confirmar la venta.')).toBeInTheDocument()
+
+        await user.click(pedido().getByRole('radio', { name: 'Efectivo' }))
+        expect(pedido().getByRole('button', { name: 'Confirmar venta' })).toBeEnabled()
+    })
+
+    it('al confirmar envía productos, cantidades y método de pago, y vacía el pedido', async () => {
+        mutar.mockImplementation((_venta: unknown, opciones: { onSuccess: (v: unknown) => void }) =>
+        opciones.onSuccess({ id: 7, total: 34000, metodo_pago: 'TARJETA' }),
         )
         const { user, buscador, pedido } = montar()
         await user.type(buscador, 'limo{Enter}')
         await user.type(buscador, 'limo{Enter}')
         await user.type(buscador, 'hamb{Enter}')
+        await user.click(pedido().getByRole('radio', { name: 'Tarjeta' }))
         await user.click(pedido().getByRole('button', { name: 'Confirmar venta' }))
 
         expect(mutar).toHaveBeenCalledWith(
-        [{ producto_id: 1, cantidad: 2 }, { producto_id: 2, cantidad: 1 }],
+        {
+            items: [{ producto_id: 1, cantidad: 2 }, { producto_id: 2, cantidad: 1 }],
+            metodo_pago: 'TARJETA',
+        },
         expect.anything(),
         )
         expect(pedido().getByText('Aún no has agregado productos.')).toBeInTheDocument()
         expect(pedido().getByText(/Venta #7 registrada/)).toBeInTheDocument()
+        // Cada venta exige elegir el método otra vez
+        expect(pedido().getByRole('radio', { name: 'Tarjeta' })).not.toBeChecked()
     })
 
     it('con el pedido vacío no se puede confirmar', () => {
