@@ -56,3 +56,20 @@ class VentaOut(BaseModel):
     detalles: List[DetalleVentaOut]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ResumenVentas(BaseModel):
+    """Totales de TODO el rango consultado, no solo de la página actual."""
+
+    total_vendido: float
+    completadas: int
+    anuladas: int
+
+
+class PaginaVentas(BaseModel):
+    items: List[VentaOut]
+    total: int
+    pagina: int
+    tamanio: int
+    paginas: int
+    resumen: ResumenVentas

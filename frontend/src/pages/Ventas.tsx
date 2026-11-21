@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { ApiError } from '../api/client'
-import { useAnularVenta, useVentas, type Venta } from '../api/ventas'
+import { TAMANIO_PAGINA, useAnularVenta, useVentas, type Venta } from '../api/ventas'
 import { Button } from '../components/ui/Button'
 import { DataTable, type Columna } from '../components/ui/DataTable'
 import { Dialog } from '../components/ui/Dialog'
 import { Field } from '../components/ui/Field'
+import { Paginador } from '../components/ui/Paginador'
 import { useToast } from '../components/ui/toast-context'
 import { mensajeDeError } from '../lib/errores'
 import { fechaColombia, formatoFechaHora, sumarDias } from '../lib/fechas'
@@ -13,29 +14,36 @@ import { formatoMoneda } from '../lib/format'
 import { validarMotivo } from '../lib/motivo'
 import { etiquetaMetodo } from '../lib/pago'
 import { validarRango } from '../lib/rango'
-import { resumenProductos, resumenVentas } from '../lib/ventas'
+import { resumenProductos } from '../lib/ventas'
 import styles from './Ventas.module.css'
+
+const RESUMEN_VACIO = { total_vendido: 0, completadas: 0, anuladas: 0 }
 
 export default function Ventas() {
     const { avisar } = useToast()
     const [desde, setDesde] = useState(() => fechaColombia())
     const [hasta, setHasta] = useState(() => fechaColombia())
+    const [pagina, setPagina] = useState(1)
 
     const errorRango = validarRango(desde, hasta)
-    const ventas = useVentas(desde, hasta, errorRango === null)
+    const ventas = useVentas(desde, hasta, pagina, errorRango === null)
     const anularVenta = useAnularVenta()
 
     const [aAnular, setAAnular] = useState<Venta | null>(null)
     const [motivo, setMotivo] = useState('')
     const [errorMotivo, setErrorMotivo] = useState<string | null>(null)
 
-    const filas = errorRango ? [] : (ventas.data ?? [])
-    const resumen = resumenVentas(filas)
+    const datos = errorRango ? undefined : ventas.data
+    const filas = datos?.items ?? []
+    const resumen = datos?.resumen ?? RESUMEN_VACIO
     const cargando = errorRango === null && ventas.isPending
+    const actualizando = ventas.isPlaceholderData
 
-    function atajo(inicio: string, fin: string) {
+    // Cualquier cambio del rango vuelve a la primera página.
+    function cambiarRango(inicio: string, fin: string) {
         setDesde(inicio)
         setHasta(fin)
+        setPagina(1)
     }
 
     function abrirAnular(venta: Venta) {
@@ -118,12 +126,24 @@ export default function Ventas() {
         <div className="ticket-divider" />
 
         <div className={styles.filtros}>
-            <Field etiqueta="Desde" type="date" value={desde} max={hoy} onChange={(e) => setDesde(e.target.value)} />
-            <Field etiqueta="Hasta" type="date" value={hasta} max={hoy} onChange={(e) => setHasta(e.target.value)} />
+            <Field
+            etiqueta="Desde"
+            type="date"
+            value={desde}
+            max={hoy}
+            onChange={(e) => cambiarRango(e.target.value, hasta)}
+            />
+            <Field
+            etiqueta="Hasta"
+            type="date"
+            value={hasta}
+            max={hoy}
+            onChange={(e) => cambiarRango(desde, e.target.value)}
+            />
             <div className={styles.atajos}>
-            <Button variante="ghost" onClick={() => atajo(hoy, hoy)}>Hoy</Button>
-            <Button variante="ghost" onClick={() => atajo(sumarDias(hoy, -1), sumarDias(hoy, -1))}>Ayer</Button>
-            <Button variante="ghost" onClick={() => atajo(sumarDias(hoy, -6), hoy)}>Últimos 7 días</Button>
+            <Button variante="ghost" onClick={() => cambiarRango(hoy, hoy)}>Hoy</Button>
+            <Button variante="ghost" onClick={() => cambiarRango(sumarDias(hoy, -1), sumarDias(hoy, -1))}>Ayer</Button>
+            <Button variante="ghost" onClick={() => cambiarRango(sumarDias(hoy, -6), hoy)}>Últimos 7 días</Button>
             </div>
         </div>
 
@@ -139,7 +159,7 @@ export default function Ventas() {
         <section className={styles.resumen} aria-label="Resumen del período">
             <div className={styles.tarjeta}>
             <span className={styles.etiqueta}>Vendido (sin anuladas)</span>
-            <strong className={styles.valor}>{formatoMoneda(resumen.totalVendido)}</strong>
+            <strong className={styles.valor}>{formatoMoneda(resumen.total_vendido)}</strong>
             </div>
             <div className={styles.tarjeta}>
             <span className={styles.etiqueta}>Ventas completadas</span>
@@ -151,13 +171,26 @@ export default function Ventas() {
             </div>
         </section>
 
-        <DataTable
+        <div className={actualizando ? styles.actualizando : undefined} aria-busy={actualizando}>
+            <DataTable
             columnas={columnas}
             filas={filas}
             claveFila={(v) => v.id}
             cargando={cargando}
             vacio="No hay ventas en este período."
-        />
+            />
+        </div>
+
+        {datos && datos.total > 0 && (
+            <Paginador
+            pagina={datos.pagina}
+            paginas={datos.paginas}
+            tamanio={TAMANIO_PAGINA}
+            total={datos.total}
+            onCambiar={setPagina}
+            deshabilitado={actualizando}
+            />
+        )}
 
         <Dialog
             abierto={aAnular !== null}

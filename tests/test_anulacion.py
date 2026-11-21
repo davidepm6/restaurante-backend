@@ -126,7 +126,7 @@ def test_la_venta_anulada_sigue_en_el_listado_pero_marcada(admin_clerk_headers):
     _anular(admin_clerk_headers, venta["id"])
 
     hoy = hoy_negocio().isoformat()
-    ventas = client.get(f"/ventas/?fecha_inicio={hoy}&fecha_fin={hoy}", headers=admin_clerk_headers).json()
+    ventas = client.get(f"/ventas/?fecha_inicio={hoy}&fecha_fin={hoy}", headers=admin_clerk_headers).json()["items"]
     encontrada = next(v for v in ventas if v["id"] == venta["id"])
     assert encontrada["estado"] == "ANULADA"
 
