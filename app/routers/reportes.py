@@ -15,7 +15,7 @@ from app.models.detalle_venta import DetalleVenta
 from app.models.producto import Producto
 from app.models.egreso import Egreso
 from app.security.dependencies import requiere_rol
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 from app.zona_horaria import ZONA_NEGOCIO, hoy_negocio, limites_dia
 
 router = APIRouter(prefix="/reportes", tags=["Reportes"])

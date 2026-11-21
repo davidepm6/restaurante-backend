@@ -9,7 +9,7 @@ from app.models.egreso import Egreso
 from app.schemas.egreso import EgresoOut
 from app.schemas.financiero import IngresosOut, EgresosOut, BalanceOut
 from app.security.dependencies import requiere_rol
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 from app.zona_horaria import limites_dia
 
 router = APIRouter(prefix="/financiero", tags=["Financiero"])

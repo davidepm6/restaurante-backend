@@ -1,12 +1,7 @@
 import os
+import time
+
 import pytest
-
-import time  # noqa: E402
-
-import jwt as pyjwt  # noqa: E402
-from cryptography.hazmat.primitives import serialization  # noqa: E402
-from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
-
 from dotenv import dotenv_values, load_dotenv
 
 # --- Guardia de seguridad (HU28): las pruebas SOLO corren contra la base de pruebas ---
@@ -19,17 +14,14 @@ if not _url_pruebas or _url_pruebas == _url_real:
         returncode=2,
     )
 
-from fastapi.testclient import TestClient  # noqa: E402
+import jwt as pyjwt  # noqa: E402
+from cryptography.hazmat.primitives import serialization  # noqa: E402
+from cryptography.hazmat.primitives.asymmetric import rsa  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
-from app.database import SessionLocal, engine  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models.usuario import RolUsuario, Usuario  # noqa: E402
-from app.security.hashing import hash_password  # noqa: E402
+from app.database import engine  # noqa: E402
 
-client = TestClient(app)
-
-TABLAS = "detalle_ventas, ventas, productos, categorias, egresos, usuarios"
+TABLAS = "detalle_ventas, ventas, productos, categorias, egresos"
 
 
 def _vaciar_tablas() -> None:
@@ -44,25 +36,7 @@ def base_de_pruebas_limpia():
     _vaciar_tablas()
 
 
-def _headers_para(email: str, rol: RolUsuario) -> dict:
-    db = SessionLocal()
-    if not db.query(Usuario).filter(Usuario.email == email).first():
-        db.add(Usuario(nombre=email, email=email, password_hash=hash_password("clave123"), rol=rol))
-        db.commit()
-    db.close()
-    token = client.post("/auth/login", json={"email": email, "password": "clave123"}).json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
-
-
-@pytest.fixture(scope="session")
-def admin_headers():
-    return _headers_para("admin_pytest@correo.com", RolUsuario.ADMINISTRADOR)
-
-
-@pytest.fixture(scope="session")
-def empleado_headers():
-    return _headers_para("empleado_pytest@correo.com", RolUsuario.EMPLEADO)
-
+# --- Tokens de Clerk para pruebas: se firman con una clave local, sin llamar a Clerk ---
 ORIGEN_PRUEBAS = "http://localhost:5173"
 
 _clave_privada = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -110,3 +84,14 @@ def empleado_clerk_headers():
 @pytest.fixture(scope="session")
 def sin_rol_clerk_headers():
     return _headers_clerk("user_pytest_sinrol", None, "Sin Rol", "sinrol.clerk@correo.com")
+
+
+# Nombres de la fase 1: las pruebas antiguas siguen funcionando, ahora con tokens de Clerk.
+@pytest.fixture(scope="session")
+def admin_headers(admin_clerk_headers):
+    return admin_clerk_headers
+
+
+@pytest.fixture(scope="session")
+def empleado_headers(empleado_clerk_headers):
+    return empleado_clerk_headers

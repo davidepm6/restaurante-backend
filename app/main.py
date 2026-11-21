@@ -1,21 +1,18 @@
+import os
+
 from fastapi import FastAPI
-from app import models
-from app.routers import auth, categorias, productos, ventas, egresos, financiero, reportes
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import me
-from app.routers import admin_empleados
+
+from app import models  # noqa: F401  (registra los modelos en Base)
+from app.routers import admin_empleados, categorias, egresos, financiero, me, productos, reportes, ventas
 
 app = FastAPI(title="Sistema de Gestión de Restaurante", version="1.0.0")
 
-import os
 
 def _origenes_permitidos() -> list[str]:
     bruto = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
     return [o.strip().rstrip("/") for o in bruto.split(",") if o.strip()]
 
-@app.get("/health", tags=["Sistema"])
-def health():
-    return {"estado": "ok"}
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,17 +22,21 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-app.include_router(auth.router)
+app.include_router(me.router)
 app.include_router(categorias.router)
 app.include_router(productos.router)
 app.include_router(ventas.router)
 app.include_router(egresos.router)
 app.include_router(financiero.router)
 app.include_router(reportes.router)
-app.include_router(me.router)
 app.include_router(admin_empleados.router)
 
 
 @app.get("/")
 def root():
     return {"mensaje": "API del sistema de gestión de restaurante activa"}
+
+
+@app.get("/health", tags=["Sistema"])
+def health():
+    return {"estado": "ok"}

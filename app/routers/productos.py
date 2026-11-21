@@ -5,7 +5,7 @@ from app.models.producto import Producto
 from app.models.categoria import Categoria
 from app.schemas.producto import ProductoCreate, ProductoUpdate, ProductoOut
 from app.security.dependencies import obtener_usuario_actual, requiere_rol
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
