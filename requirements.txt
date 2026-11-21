@@ -1,4 +1,4 @@
-﻿alembic==1.20.1
+alembic==1.20.1
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
@@ -9,7 +9,7 @@ clerk-backend-api==7.1.0
 click==8.5.0
 colorama==0.4.6
 cryptography==50.0.1
-dnspython==2.8.0
+dnspython==2.9.2
 ecdsa==0.19.2
 email-validator==2.3.0
 fastapi==0.141.1
