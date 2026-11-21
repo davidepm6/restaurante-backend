@@ -1,15 +1,24 @@
 from datetime import date, datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models.detalle_venta import DetalleVenta
 from app.models.producto import Producto
 from app.security.roles import RolUsuario
 from app.models.venta import Venta
-from app.schemas.venta import AnulacionCreate, DetalleVentaOut, VentaCreate, VentaOut
+from app.paginacion import ParametrosPagina, total_paginas
+from app.schemas.venta import (
+    AnulacionCreate,
+    DetalleVentaOut,
+    PaginaVentas,
+    ResumenVentas,
+    VentaCreate,
+    VentaOut,
+)
 from app.security.dependencies import requiere_rol
 from app.zona_horaria import limites_dia
 
@@ -38,7 +47,6 @@ def _a_venta_out(venta: Venta) -> VentaOut:
             for d in venta.detalles
         ],
     )
-
 
 @router.post("/", response_model=VentaOut, status_code=201)
 def registrar_venta(
@@ -110,21 +118,51 @@ def registrar_venta(
     return _a_venta_out(nueva_venta)
 
 
-@router.get("/", response_model=List[VentaOut])
+@router.get("/", response_model=PaginaVentas)
 def listar_ventas(
     fecha_inicio: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
     fecha_fin: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
+    pagina: ParametrosPagina = Depends(),
     db: Session = Depends(get_db),
     _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
 ):
-    query = db.query(Venta)
-
+    filtros = []
     if fecha_inicio:
-        query = query.filter(Venta.fecha >= limites_dia(fecha_inicio, fecha_inicio)[0])
+        filtros.append(Venta.fecha >= limites_dia(fecha_inicio, fecha_inicio)[0])
     if fecha_fin:
-        query = query.filter(Venta.fecha < limites_dia(fecha_fin, fecha_fin)[1])
+        filtros.append(Venta.fecha < limites_dia(fecha_fin, fecha_fin)[1])
 
-    return [_a_venta_out(v) for v in query.order_by(Venta.fecha.desc()).all()]
+    # Totales de TODO el rango (no solo de la página), en una sola consulta.
+    total, anuladas, vendido = (
+        db.query(
+            func.count(Venta.id),
+            func.count(Venta.id).filter(Venta.estado == "ANULADA"),
+            func.coalesce(func.sum(Venta.total).filter(Venta.estado == "COMPLETADA"), 0),
+        )
+        .filter(*filtros)
+        .one()
+    )
+
+    # El detalle y los productos se cargan en bloque: 2 consultas en total, no una por venta.
+    # Se ordena también por id para que la paginación sea estable cuando dos ventas comparten fecha.
+    ventas = (
+        db.query(Venta)
+        .options(selectinload(Venta.detalles).selectinload(DetalleVenta.producto))
+        .filter(*filtros)
+        .order_by(Venta.fecha.desc(), Venta.id.desc())
+        .offset(pagina.desplazamiento)
+        .limit(pagina.tamanio)
+        .all()
+    )
+
+    return PaginaVentas(
+        items=[_a_venta_out(v) for v in ventas],
+        total=total,
+        pagina=pagina.pagina,
+        tamanio=pagina.tamanio,
+        paginas=total_paginas(total, pagina.tamanio),
+        resumen=ResumenVentas(total_vendido=float(vendido), completadas=total - anuladas, anuladas=anuladas),
+    )
 
 
 @router.get("/{venta_id}", response_model=VentaOut)

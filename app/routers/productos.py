@@ -10,6 +10,8 @@ from app.security.roles import RolUsuario
 
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
+# Tope de seguridad del catálogo completo (el punto de venta lo necesita entero para buscar al instante).
+MAXIMO_PRODUCTOS = 1000
 
 @router.post("/", response_model=ProductoOut, status_code=201)
 def crear_producto(
@@ -32,7 +34,13 @@ def listar_productos(
     db: Session = Depends(get_db),
     _=Depends(obtener_usuario_actual),
 ):
-    return db.query(Producto).filter(Producto.activo == True).order_by(Producto.nombre).all()
+        return (
+        db.query(Producto)
+        .filter(Producto.activo == True)
+        .order_by(Producto.nombre)
+        .limit(MAXIMO_PRODUCTOS)
+        .all()
+    )
 
 
 # Debe ir ANTES de "/{producto_id}", o "stock-bajo" se interpretaría como un identificador.
