@@ -12,6 +12,7 @@ import SignUpPage from './pages/SignUpPage'
 import Categorias from './pages/Categorias'
 import Productos from './pages/Productos'
 import PuntoDeVenta from './pages/PuntoDeVenta'
+import Ventas from './pages/Ventas'
 
 function protegida(ruta: string, elemento: ReactElement) {
   const definicion = RUTAS.find((r) => r.ruta === ruta)
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="empleados" element={protegida('/empleados', <Empleados />)} />
         <Route path="productos" element={protegida('/productos', <Productos />)} />
         <Route path="punto-de-venta" element={protegida('/punto-de-venta', <PuntoDeVenta />)} />
+        <Route path="ventas" element={protegida('/ventas', <Ventas />)} />
         {import.meta.env.DEV && <Route path="muestrario" element={protegida('/muestrario', <Muestrario />)} />}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
