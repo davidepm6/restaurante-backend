@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.database import get_db
-from app.models.producto import Producto
 from app.models.categoria import Categoria
-from app.schemas.producto import ProductoCreate, ProductoUpdate, ProductoOut
+from app.models.producto import Producto, stock_bajo_sql
+from app.schemas.producto import ProductoCreate, ProductoOut, ProductoUpdate
 from app.security.dependencies import obtener_usuario_actual, requiere_rol
 from app.security.roles import RolUsuario
 
@@ -14,7 +15,7 @@ router = APIRouter(prefix="/productos", tags=["Productos"])
 def crear_producto(
     producto: ProductoCreate,
     db: Session = Depends(get_db),
-    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
 ):
     categoria = db.query(Categoria).filter(Categoria.id == producto.categoria_id).first()
     if not categoria:
@@ -29,16 +30,31 @@ def crear_producto(
 @router.get("/", response_model=list[ProductoOut])
 def listar_productos(
     db: Session = Depends(get_db),
-    _=Depends(obtener_usuario_actual)
+    _=Depends(obtener_usuario_actual),
 ):
-        return db.query(Producto).filter(Producto.activo == True).order_by(Producto.nombre).all()
+    return db.query(Producto).filter(Producto.activo == True).order_by(Producto.nombre).all()
+
+
+# Debe ir ANTES de "/{producto_id}", o "stock-bajo" se interpretaría como un identificador.
+@router.get("/stock-bajo", response_model=list[ProductoOut])
+def listar_stock_bajo(
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
+):
+    """Productos activos con un mínimo definido cuyo stock llegó a él o está por debajo; los más urgentes primero."""
+    return (
+        db.query(Producto)
+        .filter(Producto.activo == True, stock_bajo_sql())
+        .order_by(Producto.stock, Producto.nombre)
+        .all()
+    )
 
 
 @router.get("/{producto_id}", response_model=ProductoOut)
 def obtener_producto(
     producto_id: int,
     db: Session = Depends(get_db),
-    _=Depends(obtener_usuario_actual)
+    _=Depends(obtener_usuario_actual),
 ):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
@@ -51,7 +67,7 @@ def actualizar_producto(
     producto_id: int,
     datos: ProductoUpdate,
     db: Session = Depends(get_db),
-    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
 ):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
@@ -71,7 +87,7 @@ def actualizar_producto(
 def eliminar_producto(
     producto_id: int,
     db: Session = Depends(get_db),
-    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR))
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
 ):
     producto = db.query(Producto).filter(Producto.id == producto_id).first()
     if not producto:
