@@ -1,0 +1,35 @@
+.filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.atajos { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+.resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.8rem;
+    margin: 1rem 0 1.4rem;
+}
+.tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+.etiqueta { font-size: 0.78rem; font-weight: 600; color: var(--ink-soft); }
+.valor { font-family: var(--font-display); font-size: 1.5rem; }
+
+.completada { color: var(--sage); font-weight: 600; }
+.anulada { color: var(--danger); font-weight: 600; }
+.estadoAnulada { display: flex; flex-direction: column; gap: 0.15rem; }
+.motivo { color: var(--ink-soft); font-size: 0.8rem; max-width: 22ch; }
+.tachado { text-decoration: line-through; color: var(--ink-soft); }
+
+.formulario { display: grid; gap: 1rem; }
+.error { color: var(--danger); margin-bottom: 1rem; }
