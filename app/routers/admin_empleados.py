@@ -7,7 +7,7 @@ import httpx
 from clerk_backend_api import Clerk, models
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 from app.schemas.empleado import (
     EmpleadoOut,
     EmpleadosOut,

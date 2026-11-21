@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.detalle_venta import DetalleVenta
 from app.models.producto import Producto
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 from app.models.venta import Venta
 from app.schemas.venta import AnulacionCreate, DetalleVentaOut, VentaCreate, VentaOut
 from app.security.dependencies import requiere_rol
@@ -76,7 +76,6 @@ def registrar_venta(
     try:
         nueva_venta = Venta(
             total=0,
-            usuario_id=usuario.id,  # solo con el login antiguo; None con Clerk
             registrada_por=usuario.clerk_user_id,
             registrada_por_nombre=usuario.nombre,
             metodo_pago=venta.metodo_pago.value,

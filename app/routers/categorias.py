@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.categoria import Categoria
 from app.models.producto import Producto
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 from app.schemas.categoria import CategoriaCreate, CategoriaOut, CategoriaUpdate
 from app.security.dependencies import obtener_usuario_actual, requiere_rol
 

@@ -4,7 +4,7 @@ from app.database import get_db
 from app.models.egreso import Egreso
 from app.schemas.egreso import EgresoCreate, EgresoOut
 from app.security.dependencies import requiere_rol
-from app.models.usuario import RolUsuario
+from app.security.roles import RolUsuario
 
 router = APIRouter(prefix="/egresos", tags=["Egresos"])
 
