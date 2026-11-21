@@ -11,7 +11,7 @@ import {
 } from './pedido'
 
 const producto = (id: number, stock: number, precio = 1000, nombre = `Producto ${id}`): Producto => ({
-    id, nombre, precio, stock, categoria_id: 1, activo: true, creado_en: '',
+    id, nombre, precio, stock, stock_minimo: 0, stock_bajo: false, categoria_id: 1, activo: true, creado_en: '',
 })
 
 describe('limitarCantidad', () => {
