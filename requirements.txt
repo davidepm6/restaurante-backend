@@ -33,7 +33,7 @@ Pygments==2.21.0
 PyJWT==2.15.1
 pytest==9.2.0
 python-dotenv==1.2.3
-reportlab==5.0.1
+reportlab==5.1.0
 rsa==4.9.1
 six==1.17.0
 SQLAlchemy==2.0.52
