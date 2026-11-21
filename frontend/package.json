@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@clerk/localizations": "^4.25.0",
-    "@clerk/react": "^6.18.9",
+    "@clerk/react": "^6.19.0",
     "@tanstack/react-query": "^5.107.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
