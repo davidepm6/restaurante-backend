@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react'
 import type { Categoria, Producto } from '../../api/catalogo'
 import { filtrarProductos } from '../../lib/busqueda'
 import { formatoMoneda } from '../../lib/format'
+import { estadoStock } from '../../lib/stock'
 import { Select } from '../ui/Select'
 import styles from './BuscadorProductos.module.css'
 
@@ -11,17 +12,17 @@ interface BuscadorProductosProps {
     categorias: Categoria[]
     cantidadEnPedido: (productoId: number) => number
     onElegir: (producto: Producto) => void
-  /** Cada vez que este número cambia, el buscador recupera el foco. */
+    /** Cada vez que este número cambia, el buscador recupera el foco. */
     senalEnfocar?: number
-}
+    }
 
-export function BuscadorProductos({
+    export function BuscadorProductos({
     productos,
     categorias,
     cantidadEnPedido,
     onElegir,
     senalEnfocar = 0,
-}: BuscadorProductosProps) {
+    }: BuscadorProductosProps) {
     const [termino, setTermino] = useState('')
     const [categoriaId, setCategoriaId] = useState('')
     const [activo, setActivo] = useState(0)
@@ -111,8 +112,14 @@ export function BuscadorProductos({
         <ul id={`${idBase}-lista`} role="listbox" aria-label="Resultados" className={styles.lista}>
             {resultados.map((p, i) => {
             const enPedido = cantidadEnPedido(p.id)
-            const agotado = p.stock < 1
-            const clases = [styles.opcion, i === indiceActivo ? styles.activa : '', agotado ? styles.agotada : '']
+            const estado = estadoStock(p)
+            const agotado = estado === 'AGOTADO'
+            const clases = [
+                styles.opcion,
+                i === indiceActivo ? styles.activa : '',
+                agotado ? styles.agotada : '',
+                estado === 'BAJO' ? styles.bajo : '',
+            ]
                 .filter(Boolean)
                 .join(' ')
             return (
@@ -129,6 +136,7 @@ export function BuscadorProductos({
                 <span className={styles.nombre}>{p.nombre}</span>
                 <span className={styles.meta}>
                     {formatoMoneda(p.precio)} · {agotado ? 'Agotado' : `stock ${p.stock}`}
+                    {estado === 'BAJO' ? ' · stock bajo' : ''}
                     {enPedido > 0 ? ` · en pedido: ${enPedido}` : ''}
                 </span>
                 </li>

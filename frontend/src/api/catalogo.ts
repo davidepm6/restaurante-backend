@@ -8,30 +8,30 @@ export interface Categoria {
     nombre: string
     descripcion: string | null
     creado_en: string
-}
+    }
 
-export interface CategoriaDatos {
+    export interface CategoriaDatos {
     nombre: string
     descripcion: string
-}
+    }
 
-const CLAVE_CATEGORIAS = ['categorias']
+    const CLAVE_CATEGORIAS = ['categorias']
 
-function cuerpoCategoria(datos: CategoriaDatos) {
+    function cuerpoCategoria(datos: CategoriaDatos) {
     return JSON.stringify({ nombre: datos.nombre, descripcion: datos.descripcion || null })
-}
+    }
 
-export function useCategorias() {
+    export function useCategorias() {
     const api = useApi()
     return useQuery({ queryKey: CLAVE_CATEGORIAS, queryFn: () => api<Categoria[]>('/categorias/') })
-}
+    }
 
-function useRefrescarCategorias() {
+    function useRefrescarCategorias() {
     const cliente = useQueryClient()
     return () => cliente.invalidateQueries({ queryKey: CLAVE_CATEGORIAS })
-}
+    }
 
-export function useCrearCategoria() {
+    export function useCrearCategoria() {
     const api = useApi()
     const refrescar = useRefrescarCategorias()
     return useMutation({
@@ -39,9 +39,9 @@ export function useCrearCategoria() {
         api<Categoria>('/categorias/', { method: 'POST', body: cuerpoCategoria(datos) }),
         onSuccess: refrescar,
     })
-}
+    }
 
-export function useActualizarCategoria() {
+    export function useActualizarCategoria() {
     const api = useApi()
     const refrescar = useRefrescarCategorias()
     return useMutation({
@@ -49,49 +49,53 @@ export function useActualizarCategoria() {
         api<Categoria>(`/categorias/${id}`, { method: 'PUT', body: cuerpoCategoria(datos) }),
         onSuccess: refrescar,
     })
-}
+    }
 
-export function useEliminarCategoria() {
+    export function useEliminarCategoria() {
     const api = useApi()
     const refrescar = useRefrescarCategorias()
     return useMutation({
         mutationFn: (id: number) => api<void>(`/categorias/${id}`, { method: 'DELETE' }),
         onSuccess: refrescar,
     })
-}
+    }
 
-/* ---------- Productos ---------- */
+    /* ---------- Productos ---------- */
 
-export interface Producto {
+    export interface Producto {
     id: number
     nombre: string
     precio: number
     stock: number
+    stock_minimo: number
+    /** Lo calcula el servidor: hay un mínimo definido y el stock llegó a él o está por debajo. */
+    stock_bajo: boolean
     categoria_id: number
     activo: boolean
     creado_en: string
-}
+    }
 
-export interface ProductoDatos {
+    export interface ProductoDatos {
     nombre: string
     precio: number
     stock: number
+    stock_minimo: number
     categoria_id: number
-}
+    }
 
-const CLAVE_PRODUCTOS = ['productos']
+    const CLAVE_PRODUCTOS = ['productos']
 
-export function useProductos() {
+    export function useProductos() {
     const api = useApi()
     return useQuery({ queryKey: CLAVE_PRODUCTOS, queryFn: () => api<Producto[]>('/productos/') })
-}
+    }
 
-function useRefrescarProductos() {
+    function useRefrescarProductos() {
     const cliente = useQueryClient()
     return () => cliente.invalidateQueries({ queryKey: CLAVE_PRODUCTOS })
-}
+    }
 
-export function useCrearProducto() {
+    export function useCrearProducto() {
     const api = useApi()
     const refrescar = useRefrescarProductos()
     return useMutation({
@@ -99,9 +103,9 @@ export function useCrearProducto() {
         api<Producto>('/productos/', { method: 'POST', body: JSON.stringify(datos) }),
         onSuccess: refrescar,
     })
-}
+    }
 
-export function useActualizarProducto() {
+    export function useActualizarProducto() {
     const api = useApi()
     const refrescar = useRefrescarProductos()
     return useMutation({
@@ -109,9 +113,9 @@ export function useActualizarProducto() {
         api<Producto>(`/productos/${id}`, { method: 'PUT', body: JSON.stringify(datos) }),
         onSuccess: refrescar,
     })
-}
+    }
 
-export function useDesactivarProducto() {
+    export function useDesactivarProducto() {
     const api = useApi()
     const refrescar = useRefrescarProductos()
     return useMutation({

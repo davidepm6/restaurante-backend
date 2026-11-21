@@ -7,7 +7,7 @@
 }
 .acciones { display: flex; gap: 0.4rem; justify-content: flex-end; }
 .formulario { display: grid; gap: 1rem; }
-.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fila { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
 .aviso {
     margin-bottom: 1rem;
     padding: 0.7rem 0.9rem;
@@ -17,6 +17,20 @@
     font-size: 0.9rem;
 }
 .error { color: var(--danger); margin-bottom: 1rem; }
+
+.herramientas { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1rem; }
+
+.celdaStock { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+.bajo,
+.agotado {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.bajo { background: rgba(185, 138, 46, 0.18); color: #7a5a14; }
+.agotado { background: rgba(168, 68, 46, 0.14); color: var(--brick-dark); }
 
 @media (max-width: 480px) {
     .fila { grid-template-columns: 1fr; }

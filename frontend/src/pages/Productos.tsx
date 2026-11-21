@@ -18,6 +18,7 @@ import {
     import { useToast } from '../components/ui/toast-context'
     import { mensajeDeError } from '../lib/errores'
     import { formatoMoneda } from '../lib/format'
+    import { contarStockBajo, estadoStock } from '../lib/stock'
     import {
     hayErrores,
     validarProducto,
@@ -26,7 +27,7 @@ import {
     } from '../lib/validacion'
     import styles from './Productos.module.css'
 
-    const FORM_VACIO: DatosProductoForm = { nombre: '', precio: '', stock: '', categoriaId: '' }
+    const FORM_VACIO: DatosProductoForm = { nombre: '', precio: '', stock: '', stockMinimo: '0', categoriaId: '' }
 
     export default function Productos() {
     const { avisar } = useToast()
@@ -43,10 +44,15 @@ import {
     const [form, setForm] = useState<DatosProductoForm>(FORM_VACIO)
     const [errores, setErrores] = useState<ErroresProducto>({})
     const [aDesactivar, setADesactivar] = useState<Producto | null>(null)
+    const [soloBajo, setSoloBajo] = useState(false)
 
     const listaCategorias = categorias.data ?? []
     const nombreCategoria = (id: number) => listaCategorias.find((c) => c.id === id)?.nombre ?? '—'
     const sinCategorias = !categorias.isPending && listaCategorias.length === 0
+
+    const todos = productos.data ?? []
+    const cantidadBajo = contarStockBajo(todos)
+    const filas = soloBajo ? todos.filter((p) => p.stock_bajo) : todos
 
     function cambiar(campo: keyof DatosProductoForm, valor: string) {
         setForm((actual) => ({ ...actual, [campo]: valor }))
@@ -63,6 +69,7 @@ import {
         nombre: producto.nombre,
         precio: String(producto.precio),
         stock: String(producto.stock),
+        stockMinimo: String(producto.stock_minimo),
         categoriaId: String(producto.categoria_id),
         })
         setErrores({})
@@ -79,6 +86,7 @@ import {
         nombre: form.nombre.trim(),
         precio: Number(form.precio),
         stock: Number(form.stock),
+        stock_minimo: Number(form.stockMinimo),
         categoria_id: Number(form.categoriaId),
         }
         const opciones = {
@@ -106,25 +114,47 @@ import {
         { clave: 'nombre', titulo: 'Producto', celda: (p) => p.nombre },
         { clave: 'categoria', titulo: 'Categoría', celda: (p) => nombreCategoria(p.categoria_id) },
         { clave: 'precio', titulo: 'Precio', alinear: 'derecha', celda: (p) => formatoMoneda(p.precio) },
-        { clave: 'stock', titulo: 'Stock', alinear: 'derecha', celda: (p) => p.stock },
+        {
+        clave: 'stock',
+        titulo: 'Stock',
+        alinear: 'derecha',
+        celda: (p) => {
+            const estado = estadoStock(p)
+            return (
+            <span className={styles.celdaStock}>
+                {p.stock}
+                {estado === 'AGOTADO' && <span className={styles.agotado}>Agotado</span>}
+                {estado === 'BAJO' && <span className={styles.bajo}>Stock bajo</span>}
+            </span>
+            )
+        },
+        },
     ]
 
     if (esAdmin) {
-        columnas.push({
-        clave: 'acciones',
-        titulo: 'Acciones',
-        alinear: 'derecha',
-        celda: (p) => (
+        columnas.push(
+        {
+            clave: 'minimo',
+            titulo: 'Mínimo',
+            alinear: 'derecha',
+            celda: (p) => (p.stock_minimo > 0 ? p.stock_minimo : '—'),
+        },
+        {
+            clave: 'acciones',
+            titulo: 'Acciones',
+            alinear: 'derecha',
+            celda: (p) => (
             <div className={styles.acciones}>
-            <Button variante="ghost" aria-label={`Editar ${p.nombre}`} onClick={() => abrirEditar(p)}>
+                <Button variante="ghost" aria-label={`Editar ${p.nombre}`} onClick={() => abrirEditar(p)}>
                 Editar
-            </Button>
-            <Button variante="ghost" aria-label={`Desactivar ${p.nombre}`} onClick={() => setADesactivar(p)}>
+                </Button>
+                <Button variante="ghost" aria-label={`Desactivar ${p.nombre}`} onClick={() => setADesactivar(p)}>
                 Desactivar
-            </Button>
+                </Button>
             </div>
-        ),
-        })
+            ),
+        },
+        )
     }
 
     return (
@@ -150,6 +180,14 @@ import {
             </p>
         )}
 
+        {esAdmin && (
+            <div className={styles.herramientas}>
+            <Button variante={soloBajo ? 'secundario' : 'ghost'} aria-pressed={soloBajo} onClick={() => setSoloBajo((v) => !v)}>
+                Solo stock bajo ({cantidadBajo})
+            </Button>
+            </div>
+        )}
+
         {productos.error && (
             <p className={styles.error}>
             No se pudieron cargar los productos: {productos.error.message}{' '}
@@ -159,10 +197,10 @@ import {
 
         <DataTable
             columnas={columnas}
-            filas={productos.data ?? []}
+            filas={filas}
             claveFila={(p) => p.id}
             cargando={productos.isPending}
-            vacio="Aún no hay productos en el catálogo."
+            vacio={soloBajo ? 'Ningún producto tiene stock bajo.' : 'Aún no hay productos en el catálogo.'}
         />
 
         <Dialog
@@ -203,19 +241,32 @@ import {
                 onChange={(e) => cambiar('stock', e.target.value)}
                 />
             </div>
-            <Select
+            <div className={styles.fila}>
+                <Field
+                etiqueta="Stock mínimo"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                step="1"
+                ayuda="Avisa cuando el stock llegue aquí. 0 = sin alerta."
+                value={form.stockMinimo}
+                error={errores.stockMinimo}
+                onChange={(e) => cambiar('stockMinimo', e.target.value)}
+                />
+                <Select
                 etiqueta="Categoría"
                 value={form.categoriaId}
                 error={errores.categoriaId}
                 onChange={(e) => cambiar('categoriaId', e.target.value)}
-            >
+                >
                 <option value="">Elige una categoría</option>
                 {listaCategorias.map((c) => (
-                <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id}>
                     {c.nombre}
-                </option>
+                    </option>
                 ))}
-            </Select>
+                </Select>
+            </div>
             </form>
         </Dialog>
 

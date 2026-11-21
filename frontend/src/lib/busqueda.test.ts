@@ -3,7 +3,7 @@ import type { Producto } from '../api/catalogo'
 import { filtrarProductos } from './busqueda'
 
 const p = (id: number, nombre: string, categoria_id: number): Producto => ({
-    id, nombre, precio: 1000, stock: 5, categoria_id, activo: true, creado_en: '',
+    id, nombre, precio: 1000, stock: 5, stock_minimo: 0, stock_bajo: false, categoria_id, activo: true, creado_en: '',
 })
 
 const LISTA = [p(1, 'Limonada natural', 1), p(2, 'Hamburguesa clásica', 2), p(3, 'Jugo de mora', 1)]
