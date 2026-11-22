@@ -1,0 +1,27 @@
+.datos {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1.2rem;
+    margin: 0 0 1rem;
+}
+.datos dt { color: var(--ink-soft); font-size: 0.85rem; }
+.datos dd { margin: 0; font-weight: 500; }
+.completada { color: var(--sage); }
+.anulada { color: var(--danger); }
+.aviso {
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.8rem;
+    background: var(--paper);
+    border-left: 3px solid var(--danger);
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+}
+.total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 1rem 0 0;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--line);
+}
+.total strong { font-family: var(--font-display); font-size: 1.4rem; }

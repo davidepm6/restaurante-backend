@@ -5,7 +5,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  (registra los modelos en Base)
 from app.errores import registrar_manejadores
-from app.routers import admin_empleados, categorias, egresos, financiero, me, productos, reportes, ventas
+from app.routers import (
+    admin_empleados,
+    categorias,
+    comprobantes,
+    egresos,
+    financiero,
+    me,
+    productos,
+    reportes,
+    ventas,
+)
 
 app = FastAPI(title="Sistema de Gestión de Restaurante", version="1.0.0")
 
@@ -29,6 +39,7 @@ app.include_router(me.router)
 app.include_router(categorias.router)
 app.include_router(productos.router)
 app.include_router(ventas.router)
+app.include_router(comprobantes.router)
 app.include_router(egresos.router)
 app.include_router(financiero.router)
 app.include_router(reportes.router)
