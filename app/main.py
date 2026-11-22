@@ -9,6 +9,7 @@ from app.routers import (
     admin_empleados,
     categorias,
     comprobantes,
+    dashboard,
     egresos,
     financiero,
     me,
@@ -43,6 +44,7 @@ app.include_router(comprobantes.router)
 app.include_router(egresos.router)
 app.include_router(financiero.router)
 app.include_router(reportes.router)
+app.include_router(dashboard.router)
 app.include_router(admin_empleados.router)
 
 
