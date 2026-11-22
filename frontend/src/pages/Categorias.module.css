@@ -8,3 +8,12 @@
 .acciones { display: flex; gap: 0.4rem; justify-content: flex-end; }
 .formulario { display: grid; gap: 1rem; }
 .error { color: var(--danger); margin-bottom: 1rem; }
+
+.herramientas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.herramientas > :first-child { flex: 1 1 240px; max-width: 360px; }

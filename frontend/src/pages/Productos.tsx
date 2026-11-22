@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
     useActualizarProducto,
     useCategorias,
@@ -8,28 +8,31 @@ import {
     useDesactivarProducto,
     useProductos,
     type Producto,
-    } from '../api/catalogo'
-    import { useMe } from '../api/me'
-    import { Button } from '../components/ui/Button'
-    import { DataTable, type Columna } from '../components/ui/DataTable'
-    import { Dialog } from '../components/ui/Dialog'
-    import { Field } from '../components/ui/Field'
-    import { Select } from '../components/ui/Select'
-    import { useToast } from '../components/ui/toast-context'
-    import { mensajeDeError } from '../lib/errores'
-    import { formatoMoneda } from '../lib/format'
-    import { contarStockBajo, estadoStock } from '../lib/stock'
-    import {
+} from '../api/catalogo'
+import { useMe } from '../api/me'
+import { Button } from '../components/ui/Button'
+import { DataTable, type Columna } from '../components/ui/DataTable'
+import { Dialog } from '../components/ui/Dialog'
+import { Field } from '../components/ui/Field'
+import { Paginador } from '../components/ui/Paginador'
+import { Select } from '../components/ui/Select'
+import { useToast } from '../components/ui/toast-context'
+import { mensajeDeError } from '../lib/errores'
+import { formatoMoneda } from '../lib/format'
+import { filtrarPorTexto, paginar, TAMANIO_LISTADO } from '../lib/listado'
+import { conCambios, enteroPositivo } from '../lib/parametrosUrl'
+import { contarStockBajo, estadoStock } from '../lib/stock'
+import {
     hayErrores,
     validarProducto,
     type DatosProductoForm,
     type ErroresProducto,
-    } from '../lib/validacion'
-    import styles from './Productos.module.css'
+} from '../lib/validacion'
+import styles from './Productos.module.css'
 
-    const FORM_VACIO: DatosProductoForm = { nombre: '', precio: '', stock: '', stockMinimo: '0', categoriaId: '' }
+const FORM_VACIO: DatosProductoForm = { nombre: '', precio: '', stock: '', stockMinimo: '0', categoriaId: '' }
 
-    export default function Productos() {
+export default function Productos() {
     const { avisar } = useToast()
     const { data: me } = useMe()
     const esAdmin = me?.role === 'ADMINISTRADOR'
@@ -44,7 +47,22 @@ import {
     const [form, setForm] = useState<DatosProductoForm>(FORM_VACIO)
     const [errores, setErrores] = useState<ErroresProducto>({})
     const [aDesactivar, setADesactivar] = useState<Producto | null>(null)
-    const [soloBajo, setSoloBajo] = useState(false)
+
+    // Los filtros viven en la dirección: sobreviven a recargar, a compartir el enlace y a volver atrás.
+    const [params, setParams] = useSearchParams()
+    const busqueda = params.get('q') ?? ''
+    const categoriaFiltro = params.get('categoria') ?? ''
+    const soloBajo = params.get('bajo') === '1'
+    const paginaPedida = enteroPositivo(params.get('pagina'))
+
+    /** Un cambio de filtro vuelve a la primera página y no llena el historial mientras se escribe. */
+    function filtrar(cambios: Record<string, string | null>) {
+        setParams((actuales) => conCambios(actuales, { pagina: null, ...cambios }), { replace: true })
+    }
+
+    function irAPagina(n: number) {
+        setParams((actuales) => conCambios(actuales, { pagina: n > 1 ? String(n) : null }))
+    }
 
     const listaCategorias = categorias.data ?? []
     const nombreCategoria = (id: number) => listaCategorias.find((c) => c.id === id)?.nombre ?? '—'
@@ -52,7 +70,12 @@ import {
 
     const todos = productos.data ?? []
     const cantidadBajo = contarStockBajo(todos)
-    const filas = soloBajo ? todos.filter((p) => p.stock_bajo) : todos
+    const coincidentes = filtrarPorTexto(todos, busqueda, (p) => p.nombre).filter(
+        (p) =>
+        (categoriaFiltro === '' || String(p.categoria_id) === categoriaFiltro) && (!soloBajo || p.stock_bajo),
+    )
+    const pagina = paginar(coincidentes, paginaPedida, TAMANIO_LISTADO)
+    const hayFiltros = busqueda !== '' || categoriaFiltro !== '' || soloBajo
 
     function cambiar(campo: keyof DatosProductoForm, valor: string) {
         setForm((actual) => ({ ...actual, [campo]: valor }))
@@ -180,13 +203,41 @@ import {
             </p>
         )}
 
-        {esAdmin && (
-            <div className={styles.herramientas}>
-            <Button variante={soloBajo ? 'secundario' : 'ghost'} aria-pressed={soloBajo} onClick={() => setSoloBajo((v) => !v)}>
+        <div className={styles.herramientas}>
+            <Field
+            etiqueta="Buscar producto"
+            type="search"
+            placeholder="Escribe el nombre"
+            value={busqueda}
+            onChange={(e) => filtrar({ q: e.target.value })}
+            />
+            <Select
+            etiqueta="Filtrar por categoría"
+            value={categoriaFiltro}
+            onChange={(e) => filtrar({ categoria: e.target.value })}
+            >
+            <option value="">Todas</option>
+            {listaCategorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                {c.nombre}
+                </option>
+            ))}
+            </Select>
+            {esAdmin && (
+            <Button
+                variante={soloBajo ? 'secundario' : 'ghost'}
+                aria-pressed={soloBajo}
+                onClick={() => filtrar({ bajo: soloBajo ? null : '1' })}
+            >
                 Solo stock bajo ({cantidadBajo})
             </Button>
-            </div>
-        )}
+            )}
+            {hayFiltros && (
+            <Button variante="ghost" onClick={() => setParams({}, { replace: true })}>
+                Limpiar filtros
+            </Button>
+            )}
+        </div>
 
         {productos.error && (
             <p className={styles.error}>
@@ -197,11 +248,21 @@ import {
 
         <DataTable
             columnas={columnas}
-            filas={filas}
+            filas={pagina.items}
             claveFila={(p) => p.id}
             cargando={productos.isPending}
-            vacio={soloBajo ? 'Ningún producto tiene stock bajo.' : 'Aún no hay productos en el catálogo.'}
+            vacio={hayFiltros ? 'Ningún producto coincide con los filtros.' : 'Aún no hay productos en el catálogo.'}
         />
+
+        {pagina.total > 0 && (
+            <Paginador
+            pagina={pagina.pagina}
+            paginas={pagina.paginas}
+            tamanio={TAMANIO_LISTADO}
+            total={pagina.total}
+            onCambiar={irAPagina}
+            />
+        )}
 
         <Dialog
             abierto={editando !== null}

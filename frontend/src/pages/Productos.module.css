@@ -18,7 +18,14 @@
 }
 .error { color: var(--danger); margin-bottom: 1rem; }
 
-.herramientas { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 1rem; }
+.herramientas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+.herramientas > :first-child { flex: 1 1 240px; max-width: 360px; }
 
 .celdaStock { display: inline-flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
 .bajo,
