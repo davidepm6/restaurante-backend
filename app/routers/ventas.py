@@ -1,5 +1,5 @@
 from datetime import date, datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -8,18 +8,21 @@ from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from app.models.detalle_venta import DetalleVenta
 from app.models.producto import Producto
-from app.security.roles import RolUsuario
 from app.models.venta import Venta
 from app.paginacion import ParametrosPagina, total_paginas
 from app.schemas.venta import (
     AnulacionCreate,
     DetalleVentaOut,
+    EmpleadoVentas,
+    EstadoVenta,
+    MetodoPago,
     PaginaVentas,
     ResumenVentas,
     VentaCreate,
     VentaOut,
 )
 from app.security.dependencies import requiere_rol
+from app.security.roles import RolUsuario
 from app.zona_horaria import limites_dia
 
 router = APIRouter(prefix="/ventas", tags=["Ventas"])
@@ -47,6 +50,7 @@ def _a_venta_out(venta: Venta) -> VentaOut:
             for d in venta.detalles
         ],
     )
+
 
 @router.post("/", response_model=VentaOut, status_code=201)
 def registrar_venta(
@@ -122,6 +126,9 @@ def registrar_venta(
 def listar_ventas(
     fecha_inicio: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
     fecha_fin: Optional[date] = Query(None, description="Formato YYYY-MM-DD"),
+    estado: Optional[EstadoVenta] = Query(None, description="COMPLETADA o ANULADA"),
+    metodo_pago: Optional[MetodoPago] = Query(None, description="EFECTIVO, TARJETA o TRANSFERENCIA"),
+    empleado: Optional[str] = Query(None, max_length=64, description="Identificador del empleado (el de /ventas/empleados)"),
     pagina: ParametrosPagina = Depends(),
     db: Session = Depends(get_db),
     _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
@@ -131,8 +138,14 @@ def listar_ventas(
         filtros.append(Venta.fecha >= limites_dia(fecha_inicio, fecha_inicio)[0])
     if fecha_fin:
         filtros.append(Venta.fecha < limites_dia(fecha_fin, fecha_fin)[1])
+    if estado:
+        filtros.append(Venta.estado == estado.value)
+    if metodo_pago:
+        filtros.append(Venta.metodo_pago == metodo_pago.value)
+    if empleado:
+        filtros.append(Venta.registrada_por == empleado)
 
-    # Totales de TODO el rango (no solo de la página), en una sola consulta.
+    # Totales de TODO lo que cumple los filtros (no solo de la página), en una sola consulta.
     total, anuladas, vendido = (
         db.query(
             func.count(Venta.id),
@@ -163,6 +176,24 @@ def listar_ventas(
         paginas=total_paginas(total, pagina.tamanio),
         resumen=ResumenVentas(total_vendido=float(vendido), completadas=total - anuladas, anuladas=anuladas),
     )
+
+
+# Debe ir ANTES de "/{venta_id}", o "empleados" se interpretaría como un identificador.
+@router.get("/empleados", response_model=List[EmpleadoVentas])
+def listar_empleados_con_ventas(
+    db: Session = Depends(get_db),
+    _=Depends(requiere_rol(RolUsuario.ADMINISTRADOR)),
+):
+    """Quienes han registrado ventas, con el nombre de su venta más reciente. Sale de los datos de ventas, sin consultar a Clerk."""
+    filas = (
+        db.query(Venta.registrada_por, Venta.registrada_por_nombre)
+        .filter(Venta.registrada_por.isnot(None))
+        .distinct(Venta.registrada_por)  # DISTINCT ON (PostgreSQL): una fila por empleado
+        .order_by(Venta.registrada_por, Venta.fecha.desc())  # la más reciente primero
+        .all()
+    )
+    empleados = [EmpleadoVentas(id=fila[0], nombre=fila[1]) for fila in filas]
+    return sorted(empleados, key=lambda e: (e.nombre or "~").lower())
 
 
 @router.get("/{venta_id}", response_model=VentaOut)

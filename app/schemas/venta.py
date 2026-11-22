@@ -59,7 +59,7 @@ class VentaOut(BaseModel):
 
 
 class ResumenVentas(BaseModel):
-    """Totales de TODO el rango consultado, no solo de la página actual."""
+    """Totales de TODO lo que cumple los filtros, no solo de la página actual."""
 
     total_vendido: float
     completadas: int
@@ -73,3 +73,10 @@ class PaginaVentas(BaseModel):
     tamanio: int
     paginas: int
     resumen: ResumenVentas
+
+
+class EmpleadoVentas(BaseModel):
+    """Un empleado que ha registrado ventas (para el filtro de la pantalla de Ventas)."""
+
+    id: str
+    nombre: Optional[str] = None

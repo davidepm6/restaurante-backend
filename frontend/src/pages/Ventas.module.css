@@ -35,3 +35,5 @@
 .error { color: var(--danger); margin-bottom: 1rem; }
 
 .actualizando { opacity: 0.55; transition: opacity 0.15s; }
+
+.nota { color: var(--ink-soft); font-size: 0.82rem; margin: -0.8rem 0 1.2rem; }

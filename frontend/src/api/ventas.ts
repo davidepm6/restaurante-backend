@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { consultaVentas, type FiltrosVentas } from '../lib/filtrosVentas'
 import { useApi } from './client'
 
 export type MetodoPago = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA'
@@ -27,70 +28,84 @@ export interface Venta {
   anulada_en: string | null
   anulada_por_nombre: string | null
   motivo_anulacion: string | null
-    detalles: DetalleVenta[]
-    }
+  detalles: DetalleVenta[]
+}
 
-    export interface NuevaVenta {
-    items: ItemVenta[]
-    metodo_pago: MetodoPago
-    }
+export interface NuevaVenta {
+  items: ItemVenta[]
+  metodo_pago: MetodoPago
+}
 
-    /** Totales de todo el rango consultado (los calcula el servidor), no solo de la página visible. */
-    export interface ResumenVentas {
-    total_vendido: number
-    completadas: number
-    anuladas: number
-    }
+/** Totales de todo lo que cumple los filtros (los calcula el servidor), no solo de la página visible. */
+export interface ResumenVentas {
+  total_vendido: number
+  completadas: number
+  anuladas: number
+}
 
-    export interface PaginaVentas {
-    items: Venta[]
-    total: number
-    pagina: number
-    tamanio: number
-    paginas: number
-    resumen: ResumenVentas
-    }
+export interface PaginaVentas {
+  items: Venta[]
+  total: number
+  pagina: number
+  tamanio: number
+  paginas: number
+  resumen: ResumenVentas
+}
 
-    export const TAMANIO_PAGINA = 25
+export interface EmpleadoVentas {
+  id: string
+  nombre: string | null
+}
 
-    export function useRegistrarVenta() {
-    const api = useApi()
-    const cliente = useQueryClient()
-    return useMutation({
-        mutationFn: (venta: NuevaVenta) => api<Venta>('/ventas/', { method: 'POST', body: JSON.stringify(venta) }),
-        // El stock cambia si la venta sale bien, y también conviene refrescarlo si falla
-        // (otro cajero pudo vender antes que tú).
-        onSettled: () => {
-        cliente.invalidateQueries({ queryKey: ['productos'] })
-        cliente.invalidateQueries({ queryKey: ['ventas'] })
-        },
-    })
-    }
+export const TAMANIO_PAGINA = 25
 
-    export function useVentas(desde: string, hasta: string, pagina: number, habilitado: boolean) {
-    const api = useApi()
-    return useQuery({
-        queryKey: ['ventas', desde, hasta, pagina],
-        queryFn: () =>
-        api<PaginaVentas>(
-            `/ventas/?fecha_inicio=${desde}&fecha_fin=${hasta}&pagina=${pagina}&tamanio=${TAMANIO_PAGINA}`,
-        ),
-        enabled: habilitado,
-        // Al cambiar de página se sigue mostrando la anterior mientras llega la nueva (sin parpadeo).
-        placeholderData: keepPreviousData,
-    })
-    }
+export function useRegistrarVenta() {
+  const api = useApi()
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: (venta: NuevaVenta) => api<Venta>('/ventas/', { method: 'POST', body: JSON.stringify(venta) }),
+    // El stock cambia si la venta sale bien, y también conviene refrescarlo si falla
+    // (otro cajero pudo vender antes que tú).
+    onSettled: () => {
+      cliente.invalidateQueries({ queryKey: ['productos'] })
+      cliente.invalidateQueries({ queryKey: ['ventas'] })
+      cliente.invalidateQueries({ queryKey: ['empleados-ventas'] })
+    },
+  })
+}
 
-    export function useAnularVenta() {
-    const api = useApi()
-    const cliente = useQueryClient()
-    return useMutation({
-        mutationFn: ({ id, motivo }: { id: number; motivo: string }) =>
-        api<Venta>(`/ventas/${id}/anular`, { method: 'POST', body: JSON.stringify({ motivo }) }),
-        // Se refresca la lista y el stock, que vuelve al inventario. También si falla (p. ej. ya estaba anulada).
-        onSettled: () => {
-        cliente.invalidateQueries({ queryKey: ['ventas'] })
-        cliente.invalidateQueries({ queryKey: ['productos'] })
-        },
-    })
+export function useVentas(filtros: FiltrosVentas, habilitado: boolean) {
+  const api = useApi()
+  const consulta = consultaVentas(filtros, TAMANIO_PAGINA)
+  return useQuery({
+    queryKey: ['ventas', consulta],
+    queryFn: () => api<PaginaVentas>(`/ventas/?${consulta}`),
+    enabled: habilitado,
+    // Al cambiar de página o de filtro se sigue mostrando lo anterior mientras llega lo nuevo (sin parpadeo).
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Quienes han registrado ventas, para el filtro de empleado. */
+export function useEmpleadosVentas() {
+  const api = useApi()
+  return useQuery({
+    queryKey: ['empleados-ventas'],
+    queryFn: () => api<EmpleadoVentas[]>('/ventas/empleados'),
+    staleTime: 60_000,
+  })
+}
+
+export function useAnularVenta() {
+  const api = useApi()
+  const cliente = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, motivo }: { id: number; motivo: string }) =>
+      api<Venta>(`/ventas/${id}/anular`, { method: 'POST', body: JSON.stringify({ motivo }) }),
+    // Se refresca la lista y el stock, que vuelve al inventario. También si falla (p. ej. ya estaba anulada).
+    onSettled: () => {
+      cliente.invalidateQueries({ queryKey: ['ventas'] })
+      cliente.invalidateQueries({ queryKey: ['productos'] })
+    },
+  })
 }
