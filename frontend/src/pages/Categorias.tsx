@@ -1,23 +1,27 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router'
 import {
     useActualizarCategoria,
     useCategorias,
     useCrearCategoria,
     useEliminarCategoria,
     type Categoria,
-    } from '../api/catalogo'
-    import { ApiError } from '../api/client'
-    import { Button } from '../components/ui/Button'
-    import { DataTable, type Columna } from '../components/ui/DataTable'
-    import { Dialog } from '../components/ui/Dialog'
-    import { Field } from '../components/ui/Field'
-    import { useToast } from '../components/ui/toast-context'
-    import { mensajeDeError } from '../lib/errores'
-    import { hayErrores, validarCategoria, type ErroresCategoria } from '../lib/validacion'
-    import styles from './Categorias.module.css'
+} from '../api/catalogo'
+import { ApiError } from '../api/client'
+import { Button } from '../components/ui/Button'
+import { DataTable, type Columna } from '../components/ui/DataTable'
+import { Dialog } from '../components/ui/Dialog'
+import { Field } from '../components/ui/Field'
+import { Paginador } from '../components/ui/Paginador'
+import { useToast } from '../components/ui/toast-context'
+import { mensajeDeError } from '../lib/errores'
+import { filtrarPorTexto, paginar, TAMANIO_LISTADO } from '../lib/listado'
+import { conCambios, enteroPositivo } from '../lib/parametrosUrl'
+import { hayErrores, validarCategoria, type ErroresCategoria } from '../lib/validacion'
+import styles from './Categorias.module.css'
 
-    export default function Categorias() {
+export default function Categorias() {
     const { avisar } = useToast()
     const { data, error, isPending, refetch } = useCategorias()
     const crear = useCrearCategoria()
@@ -29,6 +33,19 @@ import {
     const [descripcion, setDescripcion] = useState('')
     const [errores, setErrores] = useState<ErroresCategoria>({})
     const [aEliminar, setAEliminar] = useState<Categoria | null>(null)
+
+    // La búsqueda y la página viven en la dirección: sobreviven a recargar y a volver atrás.
+    const [params, setParams] = useSearchParams()
+    const busqueda = params.get('q') ?? ''
+    const paginaPedida = enteroPositivo(params.get('pagina'))
+
+    function buscar(texto: string) {
+        setParams((actuales) => conCambios(actuales, { q: texto, pagina: null }), { replace: true })
+    }
+
+    function irAPagina(n: number) {
+        setParams((actuales) => conCambios(actuales, { pagina: n > 1 ? String(n) : null }))
+    }
 
     function abrirNueva() {
         setNombre('')
@@ -76,7 +93,9 @@ import {
         })
     }
 
-    const filas = [...(data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    const ordenadas = [...(data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    const coincidentes = filtrarPorTexto(ordenadas, busqueda, (c) => `${c.nombre} ${c.descripcion ?? ''}`)
+    const pagina = paginar(coincidentes, paginaPedida, TAMANIO_LISTADO)
 
     const columnas: Columna<Categoria>[] = [
         { clave: 'nombre', titulo: 'Nombre', celda: (c) => c.nombre },
@@ -109,6 +128,21 @@ import {
         </div>
         <div className="ticket-divider" />
 
+        <div className={styles.herramientas}>
+            <Field
+            etiqueta="Buscar categoría"
+            type="search"
+            placeholder="Nombre o descripción"
+            value={busqueda}
+            onChange={(e) => buscar(e.target.value)}
+            />
+            {busqueda !== '' && (
+            <Button variante="ghost" onClick={() => setParams({}, { replace: true })}>
+                Limpiar búsqueda
+            </Button>
+            )}
+        </div>
+
         {error && (
             <p className={styles.error}>
             No se pudieron cargar las categorías: {error.message}{' '}
@@ -118,11 +152,25 @@ import {
 
         <DataTable
             columnas={columnas}
-            filas={filas}
+            filas={pagina.items}
             claveFila={(c) => c.id}
             cargando={isPending}
-            vacio="Aún no hay categorías. Crea la primera con «Nueva categoría»."
+            vacio={
+            busqueda !== ''
+                ? 'Ninguna categoría coincide con la búsqueda.'
+                : 'Aún no hay categorías. Crea la primera con «Nueva categoría».'
+            }
         />
+
+        {pagina.total > 0 && (
+            <Paginador
+            pagina={pagina.pagina}
+            paginas={pagina.paginas}
+            tamanio={TAMANIO_LISTADO}
+            total={pagina.total}
+            onCambiar={irAPagina}
+            />
+        )}
 
         <Dialog
             abierto={editando !== null}
