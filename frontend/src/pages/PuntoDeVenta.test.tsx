@@ -8,6 +8,8 @@ import PuntoDeVenta from './PuntoDeVenta'
 
 vi.mock('../api/catalogo', () => ({ useProductos: vi.fn(), useCategorias: vi.fn() }))
 vi.mock('../api/ventas', () => ({ useRegistrarVenta: vi.fn() }))
+const { descargarArchivo } = vi.hoisted(() => ({ descargarArchivo: vi.fn() }))
+vi.mock('../api/descargas', () => ({ useDescargarArchivo: () => descargarArchivo }))
 
 const PRODUCTOS = [
     { id: 1, nombre: 'Limonada natural', precio: 6000, stock: 3, categoria_id: 1, activo: true, creado_en: '' },
@@ -65,6 +67,20 @@ const PRODUCTOS = [
         expect(pedido().getByRole('button', { name: 'Aumentar cantidad de Limonada natural' })).toBeDisabled()
         // Los intentos de más generan un aviso cada uno, así que puede haber varios.
         expect((await screen.findAllByText(/No hay más stock disponible/)).length).toBeGreaterThan(0)
+    })
+
+    it('después de vender se puede descargar el comprobante de esa venta', async () => {
+    descargarArchivo.mockResolvedValue(undefined)
+    mutar.mockImplementation((_venta: unknown, opciones: { onSuccess: (v: unknown) => void }) =>
+        opciones.onSuccess({ id: 9, total: 6000, metodo_pago: 'EFECTIVO' }),
+    )
+    const { user, buscador, pedido } = montar()
+    await user.type(buscador, 'limo{Enter}')
+    await user.click(pedido().getByRole('radio', { name: 'Efectivo' }))
+    await user.click(pedido().getByRole('button', { name: 'Confirmar venta' }))
+
+    await user.click(pedido().getByRole('button', { name: 'Descargar comprobante' }))
+    expect(descargarArchivo).toHaveBeenCalledWith('/ventas/9/comprobante', 'comprobante-9.pdf')
     })
 
     it('no agrega un producto agotado', async () => {

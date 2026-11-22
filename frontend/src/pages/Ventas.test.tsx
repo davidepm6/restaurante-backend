@@ -13,6 +13,9 @@ vi.mock('../api/ventas', () => ({
     useEmpleadosVentas: vi.fn(),
 }))
 
+const { descargarArchivo } = vi.hoisted(() => ({ descargarArchivo: vi.fn() }))
+vi.mock('../api/descargas', () => ({ useDescargarArchivo: () => descargarArchivo }))
+
 const detalle = (nombre: string, cantidad: number) => ({
   producto_id: 1, nombre_producto: nombre, cantidad, precio_unitario: 1000, subtotal: 1000 * cantidad,
 })
@@ -107,6 +110,24 @@ const VENTAS = [
         expect(screen.getByRole('button', { name: 'Anular venta 1' })).toBeInTheDocument()
         expect(screen.getByRole('button', { name: 'Anular venta 2' })).toBeInTheDocument()
         expect(screen.queryByRole('button', { name: 'Anular venta 3' })).not.toBeInTheDocument()
+    })
+
+      it('cada venta, también las anuladas, tiene su botón para ver el detalle', () => {
+    montar()
+    expect(screen.getByRole('button', { name: 'Ver detalle de la venta 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver detalle de la venta 3' })).toBeInTheDocument()
+    })
+
+    it('el detalle muestra la venta y permite descargar su comprobante', async () => {
+    descargarArchivo.mockResolvedValue(undefined)
+    const { user } = montar()
+    await user.click(screen.getByRole('button', { name: 'Ver detalle de la venta 1' }))
+
+    const dialogo = within(screen.getByRole('dialog', { name: 'Venta #1' }))
+    expect(dialogo.getByText('Hamburguesa clásica')).toBeInTheDocument()
+
+    await user.click(dialogo.getByRole('button', { name: 'Descargar comprobante' }))
+    expect(descargarArchivo).toHaveBeenCalledWith('/ventas/1/comprobante', 'comprobante-1.pdf')
     })
 
     it('para anular se exige el motivo y no se envía nada sin él', async () => {

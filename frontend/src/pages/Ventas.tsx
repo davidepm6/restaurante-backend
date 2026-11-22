@@ -8,6 +8,7 @@ import { DataTable, type Columna } from '../components/ui/DataTable'
 import { Dialog } from '../components/ui/Dialog'
 import { Field } from '../components/ui/Field'
 import { Paginador } from '../components/ui/Paginador'
+import { DetalleVenta } from '../components/ventas/DetalleVenta'
 import { Select } from '../components/ui/Select'
 import { useToast } from '../components/ui/toast-context'
 import { mensajeDeError } from '../lib/errores'
@@ -40,6 +41,7 @@ export default function Ventas() {
     const [aAnular, setAAnular] = useState<Venta | null>(null)
     const [motivo, setMotivo] = useState('')
     const [errorMotivo, setErrorMotivo] = useState<string | null>(null)
+    const [detalleDe, setDetalleDe] = useState<Venta | null>(null)
 
     /** Un cambio de filtro vuelve a la primera página y no llena el historial del navegador. */
     function cambiar(cambios: Record<string, string | null>) {
@@ -115,17 +117,23 @@ export default function Ventas() {
             <span className={styles.completada}>Completada</span>
             ),
         },
-        {
+            {
         clave: 'acciones',
         titulo: 'Acciones',
         alinear: 'derecha',
-        celda: (v) =>
-            v.estado === 'COMPLETADA' ? (
-            <Button variante="ghost" aria-label={`Anular venta ${v.id}`} onClick={() => abrirAnular(v)}>
-                Anular
+        celda: (v) => (
+            <div className={styles.acciones}>
+            <Button variante="ghost" aria-label={`Ver detalle de la venta ${v.id}`} onClick={() => setDetalleDe(v)}>
+                Ver detalle
             </Button>
-            ) : null,
-        },
+            {v.estado === 'COMPLETADA' && (
+                <Button variante="ghost" aria-label={`Anular venta ${v.id}`} onClick={() => abrirAnular(v)}>
+                Anular
+                </Button>
+            )}
+            </div>
+        ),
+    },
     ]
 
     return (
@@ -240,6 +248,8 @@ export default function Ventas() {
             deshabilitado={actualizando}
             />
         )}
+
+        {detalleDe && <DetalleVenta venta={detalleDe} onCerrar={() => setDetalleDe(null)} />}
 
         <Dialog
             abierto={aAnular !== null}

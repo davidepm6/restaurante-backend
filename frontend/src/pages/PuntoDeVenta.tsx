@@ -4,6 +4,7 @@ import { useCategorias, useProductos, type Producto } from '../api/catalogo'
 import { useRegistrarVenta, type MetodoPago, type Venta } from '../api/ventas'
 import { BuscadorProductos } from '../components/pos/BuscadorProductos'
 import { SelectorPago } from '../components/pos/SelectorPago'
+import { BotonComprobante } from '../components/ventas/BotonComprobante'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/toast-context'
 import { mensajeDeError } from '../lib/errores'
@@ -206,12 +207,15 @@ import {
                 )}
             </div>
 
-            {ultimaVenta && (
-                <p className={styles.ultima} role="status">
-                Venta #{ultimaVenta.id} registrada
-                {ultimaVenta.metodo_pago ? ` · ${etiquetaMetodo(ultimaVenta.metodo_pago)}` : ''} · Total{' '}
-                {formatoMoneda(ultimaVenta.total)}
+        {ultimaVenta && (
+            <div className={styles.ultima}>
+                <p role="status">
+                    Venta #{ultimaVenta.id} registrada
+                    {ultimaVenta.metodo_pago ? ` · ${etiquetaMetodo(ultimaVenta.metodo_pago)}` : ''} · Total{' '}
+                    {formatoMoneda(ultimaVenta.total)}
                 </p>
+                <BotonComprobante ventaId={ultimaVenta.id} />
+                </div>
             )}
             </section>
         </div>
