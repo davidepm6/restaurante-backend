@@ -4,14 +4,14 @@ import { RUTAS } from './auth/rutas'
 import { AppLayout } from './components/layout/AppLayout'
 import { RequireAuth } from './components/layout/RequireAuth'
 import { RequireRole } from './components/layout/RequireRole'
-import Empleados from './pages/Empleados'
-import Inicio from './pages/Inicio'
-import Muestrario from './pages/Muestrario'
-import SignInPage from './pages/SignInPage'
-import SignUpPage from './pages/SignUpPage'
 import Categorias from './pages/Categorias'
+import Empleados from './pages/Empleados'
+import Muestrario from './pages/Muestrario'
+import Portada from './pages/Portada'
 import Productos from './pages/Productos'
 import PuntoDeVenta from './pages/PuntoDeVenta'
+import SignInPage from './pages/SignInPage'
+import SignUpPage from './pages/SignUpPage'
 import Ventas from './pages/Ventas'
 
 function protegida(ruta: string, elemento: ReactElement) {
@@ -33,12 +33,12 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route index element={<Inicio />} />
-        <Route path="categorias" element={protegida('/categorias', <Categorias />)} />
-        <Route path="empleados" element={protegida('/empleados', <Empleados />)} />
-        <Route path="productos" element={protegida('/productos', <Productos />)} />
+        <Route index element={<Portada />} />
         <Route path="punto-de-venta" element={protegida('/punto-de-venta', <PuntoDeVenta />)} />
         <Route path="ventas" element={protegida('/ventas', <Ventas />)} />
+        <Route path="categorias" element={protegida('/categorias', <Categorias />)} />
+        <Route path="productos" element={protegida('/productos', <Productos />)} />
+        <Route path="empleados" element={protegida('/empleados', <Empleados />)} />
         {import.meta.env.DEV && <Route path="muestrario" element={protegida('/muestrario', <Muestrario />)} />}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,0 +1,46 @@
+.cabecera {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    }
+    .seccion { margin-bottom: 2rem; }
+    .seccion h3 { font-size: 1.05rem; margin: 0; }
+    .nota { color: var(--ink-soft); font-size: 0.85rem; margin: 0.1rem 0 0.8rem; }
+
+    .tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 0.8rem;
+    }
+
+    .selector { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.6rem 0; }
+
+    .paneles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.2rem;
+    align-items: start;
+    }
+    .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.2rem;
+    }
+    .panel h3 { font-size: 1.05rem; margin: 0; }
+
+    .vacio { color: var(--ink-soft); font-style: italic; font-size: 0.9rem; }
+    .error { color: var(--danger); margin-bottom: 1rem; }
+
+    .stock { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+    .stockFila {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px dashed var(--line);
+}
+.stockFila .nota { margin: 0; white-space: nowrap; }
+.enlace { display: inline-block; margin-top: 0.8rem; font-size: 0.88rem; }

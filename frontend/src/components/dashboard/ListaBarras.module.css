@@ -1,0 +1,7 @@
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; }
+.fila { display: grid; gap: 0.3rem; }
+.cabecera { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+.etiqueta { font-weight: 600; }
+.texto { color: var(--ink-soft); font-size: 0.85rem; text-align: right; }
+.pista { height: 0.5rem; background: var(--line); border-radius: 999px; overflow: hidden; }
+.barra { height: 100%; background: var(--brass); border-radius: 999px; }
