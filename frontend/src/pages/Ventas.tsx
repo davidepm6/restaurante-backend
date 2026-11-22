@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { useSearchParams } from 'react-router'
 import { ApiError } from '../api/client'
-import { TAMANIO_PAGINA, useAnularVenta, useVentas, type Venta } from '../api/ventas'
+import { TAMANIO_PAGINA, useAnularVenta, useEmpleadosVentas, useVentas, type Venta } from '../api/ventas'
 import { Button } from '../components/ui/Button'
 import { DataTable, type Columna } from '../components/ui/DataTable'
 import { Dialog } from '../components/ui/Dialog'
 import { Field } from '../components/ui/Field'
 import { Paginador } from '../components/ui/Paginador'
+import { Select } from '../components/ui/Select'
 import { useToast } from '../components/ui/toast-context'
 import { mensajeDeError } from '../lib/errores'
 import { fechaColombia, formatoFechaHora, sumarDias } from '../lib/fechas'
+import { hayFiltrosExtra, leerFiltrosVentas } from '../lib/filtrosVentas'
 import { formatoMoneda } from '../lib/format'
 import { validarMotivo } from '../lib/motivo'
-import { etiquetaMetodo } from '../lib/pago'
+import { METODOS_PAGO, etiquetaMetodo } from '../lib/pago'
+import { conCambios } from '../lib/parametrosUrl'
 import { validarRango } from '../lib/rango'
 import { resumenProductos } from '../lib/ventas'
 import styles from './Ventas.module.css'
@@ -21,17 +25,30 @@ const RESUMEN_VACIO = { total_vendido: 0, completadas: 0, anuladas: 0 }
 
 export default function Ventas() {
     const { avisar } = useToast()
-    const [desde, setDesde] = useState(() => fechaColombia())
-    const [hasta, setHasta] = useState(() => fechaColombia())
-    const [pagina, setPagina] = useState(1)
+    const hoy = fechaColombia()
 
-    const errorRango = validarRango(desde, hasta)
-    const ventas = useVentas(desde, hasta, pagina, errorRango === null)
+    // Fechas, página y filtros viven en la dirección: sobreviven a recargar, a compartir el enlace y a volver atrás.
+    const [params, setParams] = useSearchParams()
+    const filtros = leerFiltrosVentas(params, hoy)
+    const hayExtra = hayFiltrosExtra(filtros)
+
+    const errorRango = validarRango(filtros.desde, filtros.hasta)
+    const ventas = useVentas(filtros, errorRango === null)
+    const empleados = useEmpleadosVentas()
     const anularVenta = useAnularVenta()
 
     const [aAnular, setAAnular] = useState<Venta | null>(null)
     const [motivo, setMotivo] = useState('')
     const [errorMotivo, setErrorMotivo] = useState<string | null>(null)
+
+    /** Un cambio de filtro vuelve a la primera página y no llena el historial del navegador. */
+    function cambiar(cambios: Record<string, string | null>) {
+        setParams((actuales) => conCambios(actuales, { pagina: null, ...cambios }), { replace: true })
+    }
+
+    function irAPagina(n: number) {
+        setParams((actuales) => conCambios(actuales, { pagina: n > 1 ? String(n) : null }))
+    }
 
     const datos = errorRango ? undefined : ventas.data
     const filas = datos?.items ?? []
@@ -39,12 +56,8 @@ export default function Ventas() {
     const cargando = errorRango === null && ventas.isPending
     const actualizando = ventas.isPlaceholderData
 
-    // Cualquier cambio del rango vuelve a la primera página.
-    function cambiarRango(inicio: string, fin: string) {
-        setDesde(inicio)
-        setHasta(fin)
-        setPagina(1)
-    }
+    const listaEmpleados = empleados.data ?? []
+    const empleadoConocido = filtros.empleado === '' || listaEmpleados.some((e) => e.id === filtros.empleado)
 
     function abrirAnular(venta: Venta) {
         setMotivo('')
@@ -115,8 +128,6 @@ export default function Ventas() {
         },
     ]
 
-    const hoy = fechaColombia()
-
     return (
         <>
         <div className="page-head">
@@ -129,22 +140,59 @@ export default function Ventas() {
             <Field
             etiqueta="Desde"
             type="date"
-            value={desde}
+            value={filtros.desde}
             max={hoy}
-            onChange={(e) => cambiarRango(e.target.value, hasta)}
+            onChange={(e) => cambiar({ desde: e.target.value })}
             />
             <Field
             etiqueta="Hasta"
             type="date"
-            value={hasta}
+            value={filtros.hasta}
             max={hoy}
-            onChange={(e) => cambiarRango(desde, e.target.value)}
+            onChange={(e) => cambiar({ hasta: e.target.value })}
             />
             <div className={styles.atajos}>
-            <Button variante="ghost" onClick={() => cambiarRango(hoy, hoy)}>Hoy</Button>
-            <Button variante="ghost" onClick={() => cambiarRango(sumarDias(hoy, -1), sumarDias(hoy, -1))}>Ayer</Button>
-            <Button variante="ghost" onClick={() => cambiarRango(sumarDias(hoy, -6), hoy)}>Últimos 7 días</Button>
+            <Button variante="ghost" onClick={() => cambiar({ desde: null, hasta: null })}>Hoy</Button>
+            <Button
+                variante="ghost"
+                onClick={() => cambiar({ desde: sumarDias(hoy, -1), hasta: sumarDias(hoy, -1) })}
+            >
+                Ayer
+            </Button>
+            <Button variante="ghost" onClick={() => cambiar({ desde: sumarDias(hoy, -6), hasta: hoy })}>
+                Últimos 7 días
+            </Button>
             </div>
+        </div>
+
+        <div className={styles.filtros}>
+            <Select etiqueta="Estado" value={filtros.estado} onChange={(e) => cambiar({ estado: e.target.value })}>
+            <option value="">Todos</option>
+            <option value="COMPLETADA">Completadas</option>
+            <option value="ANULADA">Anuladas</option>
+            </Select>
+            <Select etiqueta="Método de pago" value={filtros.metodo} onChange={(e) => cambiar({ pago: e.target.value })}>
+            <option value="">Todos</option>
+            {METODOS_PAGO.map((m) => (
+                <option key={m.valor} value={m.valor}>
+                {m.etiqueta}
+                </option>
+            ))}
+            </Select>
+            <Select etiqueta="Empleado" value={filtros.empleado} onChange={(e) => cambiar({ empleado: e.target.value })}>
+            <option value="">Todos</option>
+            {listaEmpleados.map((e) => (
+                <option key={e.id} value={e.id}>
+                {e.nombre ?? 'Sin nombre'}
+                </option>
+            ))}
+            {!empleadoConocido && <option value={filtros.empleado}>Empleado seleccionado</option>}
+            </Select>
+            {hayExtra && (
+            <Button variante="ghost" onClick={() => cambiar({ estado: null, pago: null, empleado: null })}>
+                Quitar filtros
+            </Button>
+            )}
         </div>
 
         {errorRango && <p className={styles.error} role="alert">{errorRango}</p>}
@@ -170,6 +218,7 @@ export default function Ventas() {
             <strong className={styles.valor}>{resumen.anuladas}</strong>
             </div>
         </section>
+        {hayExtra && <p className={styles.nota}>Los totales corresponden solo a las ventas que cumplen los filtros.</p>}
 
         <div className={actualizando ? styles.actualizando : undefined} aria-busy={actualizando}>
             <DataTable
@@ -177,7 +226,7 @@ export default function Ventas() {
             filas={filas}
             claveFila={(v) => v.id}
             cargando={cargando}
-            vacio="No hay ventas en este período."
+            vacio={hayExtra ? 'Ninguna venta coincide con los filtros.' : 'No hay ventas en este período.'}
             />
         </div>
 
@@ -187,7 +236,7 @@ export default function Ventas() {
             paginas={datos.paginas}
             tamanio={TAMANIO_PAGINA}
             total={datos.total}
-            onCambiar={setPagina}
+            onCambiar={irAPagina}
             deshabilitado={actualizando}
             />
         )}
